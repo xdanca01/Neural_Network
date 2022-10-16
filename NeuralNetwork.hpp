@@ -10,11 +10,11 @@ class NeuralNetwork {
 		std::vector<std::vector<float>> data;
 		//Training data labels
 		int labels[DATA_SIZE];
-		//Hidden layers and output layer with neurons saved in it
-		std::vector<std::vector<Neuron>> Layers;
 		//[Layer][To][From]
 		std::vector<Matrix*> Weights;
+		//[Layer][Neuron][0] Vec
 		std::vector<Matrix*> Y;
+		//[Layer][Neuron][0] Vec
 		std::vector<Matrix*> Biases;
 
 	public:
@@ -29,12 +29,9 @@ class NeuralNetwork {
 		//predict output based on input
 		void forwardPropagation(std::vector<float> &inputNeurons);
 		std::vector<float> predict();
-		void backpropagation();
+		void backpropagation(float expectedOutput);
 		//Compute gradient with gradient descent method
 		std::vector<std::vector<float>> gradientDescent(int expectedOutput);
-
-		//computes prediction percentage for each neuron output
-		void computeSoftMax(std::vector<float> outputNeurons, std::vector<Neuron> &outputLayer);
 
 		void trainNetwork();
 		//ReLU activation function

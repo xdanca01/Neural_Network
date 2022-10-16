@@ -40,7 +40,7 @@ Matrix* Matrix::dot(Matrix &M2) {
 		//Right M1
 		for (unsigned j = 0; j < cols; ++j) {
 			for (unsigned k = 0; k < M2.cols; ++k) {
-				output->M->at(i)[k] += this->M->at(i)[j] * M2.M->at(i)[k];
+				output->M->at(i)[k] += this->M->at(i)[j] * M2.M->at(j)[k];
 			}
 		}
 	}
@@ -55,7 +55,7 @@ Matrix* Matrix::operator *(Matrix &M2) {
 		//Right M1
 		for (unsigned j = 0; j < cols; ++j) {
 			for (unsigned k = 0; k < M2.cols; ++k) {
-				output->M->at(i)[k] += this->M->at(i)[j] * M2.M->at(i)[k];
+				output->M->at(i)[k] += this->M->at(i)[j] * M2.M->at(j)[k];
 			}
 		}
 	}
@@ -80,6 +80,28 @@ Matrix* Matrix::operator +(Matrix &M2) {
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < cols; ++j) {
 			output->M->at(i)[j] = this->M->at(i)[j] + M2.M->at(i)[j];
+		}
+	}
+	return output;
+}
+
+Matrix* Matrix::operator -(float D) {
+	Matrix* output = new Matrix(rows, cols);
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			output->M->at(i)[j] = this->M->at(i)[j] - D;
+		}
+	}
+	return output;
+}
+
+Matrix* Matrix::subExpectedOutput(float expected) {
+	Matrix* output = new Matrix(rows, cols);
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			//if row == expected output, then subtract -1 from the value network computed
+			//else subtract -0
+			output->M->at(i)[j] = i == expected ? this->M->at(i)[j] - 1.0f : this->M->at(i)[j];
 		}
 	}
 	return output;
@@ -143,4 +165,15 @@ Matrix* Matrix::softMax() {
 		}
 	}
 	return output;
+}
+
+float Matrix::sum() {
+	float sum = 0;
+	for (unsigned i = 0; i < rows; ++i) {
+		//Right
+		for (unsigned j = 0; j < cols; ++j) {
+			sum += (*M)[i][j];
+		}
+	}
+	return sum;
 }

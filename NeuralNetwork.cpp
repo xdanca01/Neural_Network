@@ -6,7 +6,6 @@ using namespace std;
 string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
 string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
 
-
 //ReLU activation function
 float ReLU(float& innerPotential) {
 	return std::fmax(0.0f, innerPotential);
@@ -50,7 +49,7 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 	for (int j = 0; j < hiddenNeuronsInLayer[0]; ++j) {
 		for (int i = 0; i < INPUTS; ++i) {
 		//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-			(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5) / 10.0f;
+			(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5);
 		}
 		M->addRow(*weightVec);
 	}
@@ -62,7 +61,7 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
 			for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
 			//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-				(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5) / 10.0f;
+				(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5);
 			}
 			M->addRow(*weightVec);
 
@@ -74,7 +73,7 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 	for (int layer = 0; layer < Layers; ++layer) {
 		biasesVec = new std::vector<float>(hiddenNeuronsInLayer[layer]);
 		for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
-			(*biasesVec)[i] = ((float)rand() / RAND_MAX - 0.5) / 10.0f;
+			(*biasesVec)[i] = ((float)rand() / RAND_MAX - 0.5);
 		}
 		Biases.push_back(new Matrix(*biasesVec));
 	}
@@ -83,30 +82,6 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 	for (int layer = 0; layer < Layers; ++layer) {
 		Y.push_back(new Matrix(hiddenNeuronsInLayer[layer], 1));
 	}
-
-	/*for (int layer = 0; layer < hiddenNeuronsInLayer.size(); ++layer) {
-		//set weights and biases for each neuron
-		for (int neuron = 0; neuron < hiddenNeuronsInLayer[layer]; ++neuron) {
-			weightVec = new std::vector<float>();
-			//if its not first hidden layer, then the count of weights is based on previous hidden layer
-			if (layer) {
-				maxCount = hiddenNeuronsInLayer[layer-1];
-			}
-			//Set initial state for biases and weights
-			for (int i = 0; i < maxCount; ++i) {
-				
-				//RAND_MAX is max number that rand can return so the randomNumber is <-0.5,0.5>
-				float randomNumber = ((float)rand() / RAND_MAX - 0.5) / 10.0f ;
-				weightVec->push_back(randomNumber);
-			}
-			bias = (float)rand() / RAND_MAX;
-			//Create neuron with weights and biases and put it to Layer
-			Layer.push_back(Neuron(weights, bias));
-			Weights.push_back(weightVec);
-		}
-		Layers.push_back(Layer);
-		Layer.clear();
-	}*/
 }
 
 void NeuralNetwork::readData(string filename) {
@@ -135,7 +110,7 @@ void NeuralNetwork::readData(string filename) {
 		}
 		this->data[dataSet][cnt] = stof(word);
 		//TODO remove
-		//break;
+		break;
 	}
 	return;
 }
@@ -152,25 +127,9 @@ void NeuralNetwork::readExpectedOutput(std::string filename) {
 		this->labels[i] = stof(line);
 	}
 }
-/*
-void NeuralNetwork::computeSoftMax(Matrix* innerPotentials) {
-	vector<float> outputs;
-	float sum = 0;
-	float myExp;
-	for (float potential : innerPotentials) {
-		myExp = exp(potential);
-		sum += myExp;
-		outputs.push_back(myExp);
-	}
-	for (int i = 0; i < outputs.size(); ++i) {
-		outputLayer[i].Y = outputs[i] / sum;
-	}
-	return;
-}*/
 
 void NeuralNetwork::forwardPropagation(std::vector<float> &inputNeurons) {
 	//std::vector<float> InnerPotential = inputNeurons * weights + biases;
-	vector<Matrix*> innerPotentials;
 	Matrix* innerPotential;
 	for (int layer = 0; layer < Weights.size(); ++layer) {
 		//W * X + B
@@ -190,38 +149,32 @@ void NeuralNetwork::forwardPropagation(std::vector<float> &inputNeurons) {
 			Y[layer] = innerPotential->softMax();
 		}
 	}
-	
-	
-	/*Neuron* neuron;
-	vector<float> innerPotentials;
-	for (int layer = 0; layer < Layers.size(); ++layer) {
-		//go throught all neurons in layer
-		for (int N = 0; N < Layers[layer].size(); ++N) {
-			neuron = &Layers[layer][N];
-			//first layer has input in inputNeurons other in previous layer
-			if (layer == 0) {
-				neuron->computeState(inputNeurons);
-			}
-			//output layer compute softmax
-			else if(layer + 1 >= Layers.size()) {
-				innerPotentials.push_back(neuron->innerPotential(Layers[layer - 1]));
-			}
-			//hidden layers
-			else {
-				neuron->computeState(Layers[layer - 1]);
-			}
+}
+
+
+
+void NeuralNetwork::backpropagation(float expectedOutput) {
+	vector<float> Dkj;
+	vector<Matrix*> EderY(Y.size());
+	vector<float> sums;
+	Matrix* M;
+	for (int i = Y.size() - 1; i >= 0; --i) {
+		//derivative = Yj - Dkj ####### output layer 
+		if (i + 1 == Y.size()) {
+			EderY[i] = Y[i]->subExpectedOutput(expectedOutput);
+		}
+		//TODO derivative of softmax
+		/*else if (i + 2 == Y.size()) {
+
+		}*/
+		//derivative = sum<ReJ->>(dE/dYr * sigma'(Epsilonr) * Wrj)
+		else {
+			M = *(EderY[i + 1]) * *(Y[i+1]->computeOutput(LogicSigmoidDerivative)->transpose());
+			M = *M * *Weights[i+1];
 		}
 	}
-	computeSoftMax(innerPotentials, Layers.back());
-	return;*/
 }
 /*
-
-
-void NeuralNetwork::backpropagation() {
-
-}
-
 vector<vector<float>> NeuralNetwork::gradientDescent(int expectedOutput) {
 	vector<vector<float>> EderY(Layers.size());
 	//Compute dE/dY
@@ -257,6 +210,7 @@ void NeuralNetwork::trainNetwork() {
 	//4. sum
 	//[Layer][To][From] weights WITH INPUT LAYER!!!!!!!
 	forwardPropagation(data[0]);
+	backpropagation(labels[0]);
 	/*
 	vector<vector<vector<float>>> E(Layers.size());
 	vector<vector<float>> gd;

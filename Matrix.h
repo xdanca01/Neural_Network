@@ -17,6 +17,7 @@ public:
 	Matrix* operator *(Matrix &M2);
 	Matrix* operator *(std::vector<float> vec);
 	Matrix* operator +(Matrix &M2);
+	Matrix* operator -(float D);
 	Matrix* transpose();
 	void addRow(std::vector<float>& vec);
 	//Exception if dimensions are not same
@@ -25,5 +26,7 @@ public:
 	float at(unsigned row, unsigned col);
 	Matrix* computeOutput(float (*func)(float&));
 	Matrix* softMax();
+	Matrix* subExpectedOutput(float expected);
+	float sum();
 };
 
