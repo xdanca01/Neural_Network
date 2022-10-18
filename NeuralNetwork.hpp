@@ -1,7 +1,9 @@
 #include "Neuron.hpp"
 #include "Matrix.h"
 
+//#define DATA_SIZE 60000
 #define DATA_SIZE 4
+//#define INPUTS 784
 #define INPUTS 2
 
 class NeuralNetwork {

@@ -98,6 +98,7 @@ void NeuralNetwork::readData(string filename) {
 
 	int cnt;
 	for (int dataSet = 0; getline(file, line); ++dataSet) {
+		word.clear();
 		cnt = 0;
 		for (int i = 0; i < line.size(); ++i) {
 			//delimiter
@@ -221,7 +222,7 @@ void NeuralNetwork::trainNetwork() {
 	vector<Matrix*> dE_dW;
 	unsigned batchSize = 4;
 	float stepSize = 0.05;
-	for (unsigned cycles = 0; cycles < 1500; ++cycles) {
+	for (unsigned cycles = 0; cycles < 200; ++cycles) {
 		for (unsigned k = 0; k < batchSize; ++k) {
 			innerPotentials = forwardPropagation(data[k]);
 			dE_dY = backpropagation(labels[k], innerPotentials);
