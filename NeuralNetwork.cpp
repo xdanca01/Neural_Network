@@ -5,6 +5,8 @@ using namespace std;
 
 string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
 string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
+string XOR_DATA = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_DATA.txt";
+string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_LABEL.txt";
 
 //ReLU activation function
 float ReLU(float& innerPotential) {
@@ -49,7 +51,7 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 	for (int j = 0; j < hiddenNeuronsInLayer[0]; ++j) {
 		for (int i = 0; i < INPUTS; ++i) {
 		//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-			(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5);
+			(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5)/10;
 		}
 		M->addRow(*weightVec);
 	}
@@ -61,7 +63,7 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
 			for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
 			//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-				(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5);
+				(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5)/10;
 			}
 			M->addRow(*weightVec);
 
@@ -110,7 +112,10 @@ void NeuralNetwork::readData(string filename) {
 		}
 		this->data[dataSet][cnt] = stof(word);
 		//TODO remove
-		break;
+		if (dataSet == 128) {
+			break;
+		}
+		//break;
 	}
 	return;
 }
@@ -128,51 +133,52 @@ void NeuralNetwork::readExpectedOutput(std::string filename) {
 	}
 }
 
-void NeuralNetwork::forwardPropagation(std::vector<float> &inputNeurons) {
+vector<Matrix*> NeuralNetwork::forwardPropagation(std::vector<float> &inputNeurons) {
 	//std::vector<float> InnerPotential = inputNeurons * weights + biases;
+	vector<Matrix*> innerPotentials;
 	Matrix* innerPotential;
+	Matrix input(inputNeurons);
 	for (int layer = 0; layer < Weights.size(); ++layer) {
 		//W * X + B
 		//input layer
 		if (layer == 0) {
-			innerPotential = *(*(Weights[layer]) * inputNeurons) + *(Biases[layer]->transpose());
+			innerPotential = *Weights[layer]->dot(*input.transpose()) + *Biases[layer]->transpose();
+			innerPotentials.push_back(innerPotential);
 		}
 		//W * X + B
 		else {
-			innerPotential = *(*(Weights[layer]) * *Y[layer - 1]) + *Biases[layer]->transpose();
+			innerPotential = *Weights[layer]->dot(*input.transpose()) + *Biases[layer]->transpose();
+			innerPotentials.push_back(innerPotential);
 		}
 		//Sigma(innerState)
 		if (layer < Weights.size() - 1) {
-			Y[layer] = innerPotential->computeOutput(LogicSigmoid);
+			Y[layer] = innerPotential->computeOutput(ReLU);
 		}
 		else {
 			Y[layer] = innerPotential->softMax();
 		}
 	}
+	return innerPotentials;
 }
 
 
 
-void NeuralNetwork::backpropagation(float expectedOutput) {
+vector<Matrix*> NeuralNetwork::backpropagation(float expectedOutput, vector<Matrix*> innerPotentials) {
 	vector<float> Dkj;
 	vector<Matrix*> EderY(Y.size());
 	vector<float> sums;
 	Matrix* M;
-	for (int i = Y.size() - 1; i >= 0; --i) {
-		//derivative = Yj - Dkj ####### output layer 
-		if (i + 1 == Y.size()) {
-			EderY[i] = Y[i]->subExpectedOutput(expectedOutput);
-		}
+	//derivative = Yj - Dkj ####### output layer 
+	EderY[EderY.size() - 1] = Y.back()->subExpectedOutput(expectedOutput);
+	for (int i = Y.size() - 2; i >= 0; --i) {
 		//TODO derivative of softmax
 		/*else if (i + 2 == Y.size()) {
 
 		}*/
 		//derivative = sum<ReJ->>(dE/dYr * sigma'(Epsilonr) * Wrj)
-		else {
-			M = *(EderY[i + 1]) * *(Y[i+1]->computeOutput(LogicSigmoidDerivative)->transpose());
-			M = *M * *Weights[i+1];
-		}
+		EderY[i] = EderY[i + 1]->multiply(*innerPotentials[i + 1]->computeOutput(ReLuDerivative))->transpose()->dot(*Weights[i + 1])->transpose();
 	}
+	return EderY;
 }
 /*
 vector<vector<float>> NeuralNetwork::gradientDescent(int expectedOutput) {
@@ -209,8 +215,41 @@ void NeuralNetwork::trainNetwork() {
 	//3. compute Der_Ek/Der_Wji
 	//4. sum
 	//[Layer][To][From] weights WITH INPUT LAYER!!!!!!!
-	forwardPropagation(data[0]);
-	backpropagation(labels[0]);
+	vector<Matrix*> Eji;
+	vector<Matrix*> innerPotentials;
+	vector<Matrix*> dE_dY;
+	vector<Matrix*> dE_dW;
+	unsigned batchSize = 4;
+	float stepSize = 0.05;
+	for (unsigned cycles = 0; cycles < 1500; ++cycles) {
+		for (unsigned k = 0; k < batchSize; ++k) {
+			innerPotentials = forwardPropagation(data[k]);
+			dE_dY = backpropagation(labels[k], innerPotentials);
+			for (int layer = 0; layer < Y.size(); ++layer) {
+				if (k == 0) {
+					if (layer == 0) {
+						Eji.push_back(dE_dY[layer]->multiply(*innerPotentials[layer]->computeOutput(ReLuDerivative))->dot((data[k])));
+					}
+					else {
+						Eji.push_back(dE_dY[layer]->multiply(*innerPotentials[layer]->computeOutput(ReLuDerivative))->dot(*Y[layer - 1]->transpose()));
+					}
+				}
+				else {
+					if (layer == 0) {
+						Eji[layer] = *Eji[layer] + *dE_dY[layer]->multiply(*innerPotentials[layer]->computeOutput(ReLuDerivative))->dot((data[k]));
+					}
+					else {
+						Eji[layer] = *Eji[layer] + *dE_dY[layer]->multiply(*innerPotentials[layer]->computeOutput(ReLuDerivative))->dot(*Y[layer - 1]->transpose());
+					}
+				}
+			}
+		}
+		for (int weight = 0; weight < Weights.size(); ++weight) {
+			Weights[weight] = *Weights[weight] - *(Eji[weight]->multiply(stepSize));
+		}
+	}
+	predict();
+	return;
 	/*
 	vector<vector<vector<float>>> E(Layers.size());
 	vector<vector<float>> gd;
@@ -282,19 +321,33 @@ void NeuralNetwork::trainNetwork() {
 		}
 	}*/
 }/*
-
+ */
 std::vector<float> NeuralNetwork::predict() {
-	vector<float> output;
-	forwardPropagation(data[50]);
-	for (Neuron N : Layers.back()) {
-		output.push_back(N.Y);
-	}
-	return output;
-}*/
+	vector<float> data{0,0};
+	//forwardPropagation(data[50]);
+	forwardPropagation(data);
+	cout << "input 0,0 has output 0 with probability:" <<Y[1]->at(0, 0) << endl;
+	data = { 0,1 };
+	forwardPropagation(data);
+	cout << "input 0,1 has output 1 with probability:" << Y[1]->at(1, 0) << endl;
+	data = { 1,0 };
+	forwardPropagation(data);
+	cout << "input 1,0 has output 1 with probability:" << Y[1]->at(1, 0) << endl;
+	data = { 1,1 };
+	forwardPropagation(data);
+	cout << "input 1,1 has output 0 with probability:" << Y[1]->at(0, 0) << endl;
+	return data;
+}
 
 int main() {
-	vector<int> layers{100, 20, 10};
+	/*vector<int> layers{100, 10, 10};
 	NeuralNetwork obj(file1, file2, layers);
+	obj.trainNetwork();*/
+	vector<int> layers{ 2, 2 };
+	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);
+	cout << "Before:" << endl;
+	obj.predict();
+	cout << "After:" << endl;
 	obj.trainNetwork();
 	//obj.predict();
 }

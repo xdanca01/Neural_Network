@@ -40,46 +40,94 @@ Matrix* Matrix::dot(Matrix &M2) {
 		//Right M1
 		for (unsigned j = 0; j < cols; ++j) {
 			for (unsigned k = 0; k < M2.cols; ++k) {
-				output->M->at(i)[k] += this->M->at(i)[j] * M2.M->at(j)[k];
+				output->M->at(i)[k] += this->at(i, j) * M2.at(j, k);
 			}
+		}
+	}
+	return output;
+}
+
+Matrix* Matrix::dot(std::vector<float> vec) {
+	checkDimensions(1);
+	Matrix* output = new Matrix(rows, vec.size());
+	//Down M1
+	for (unsigned i = 0; i < rows; ++i) {
+		//Right M1
+		for (unsigned j = 0; j < vec.size(); ++j) {
+			output->M->at(i)[j] += this->at(i, 0) * vec[j];
 		}
 	}
 	return output;
 }
 
 Matrix* Matrix::operator *(Matrix &M2) {
-	checkDimensions(M2.rows);
-	Matrix *output = new Matrix(rows, M2.cols);
+	if (rows != M2.rows || cols != M2.cols)
+		throw 789;
+	Matrix *output = new Matrix(rows, cols);
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right M1
 		for (unsigned j = 0; j < cols; ++j) {
-			for (unsigned k = 0; k < M2.cols; ++k) {
-				output->M->at(i)[k] += this->M->at(i)[j] * M2.M->at(j)[k];
-			}
+			output->M->at(i)[j] = this->at(i, j) * M2.at(i, j);
 		}
 	}
 	return output;
 }
 
 Matrix* Matrix::operator *(std::vector<float> vec) {
-	checkDimensions(vec.size());
-	Matrix* output = new Matrix(rows, 1);
+	if (rows != 1 || cols != vec.size())
+		throw 789;
+	Matrix* output = new Matrix(rows, cols);
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right M1
 		for (unsigned j = 0; j < cols; ++j) {
-			output->M->at(i)[0] += this->M->at(i)[j] * vec[j];
+			output->M->at(i)[j] = this->at(i, j) * vec[j];
+		}
+	}
+	return output;
+}
+
+Matrix* Matrix::multiply(Matrix& M2) {
+	if (rows != M2.rows || cols != M2.cols)
+		throw 789;
+	Matrix* output = new Matrix(rows, cols);
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			output->M->at(i)[j] = this->at(i, j) * M2.at(i, j);
+		}
+	}
+	return output;
+}
+
+Matrix* Matrix::multiply(float numb) {
+	Matrix* output = new Matrix(rows, cols);
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			output->M->at(i)[j] = this->at(i, j) * numb;
+		}
+	}
+	return output;
+}
+
+Matrix* Matrix::multiply(std::vector<float>& vec) {
+	if (rows != 1 || cols != vec.size())
+		throw 789;
+	Matrix* output = new Matrix(rows, cols);
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			output->M->at(i)[j] = this->at(i, j) * vec[j];
 		}
 	}
 	return output;
 }
 
 Matrix* Matrix::operator +(Matrix &M2) {
+	checkDimensionsPlus(M2.rows, M2.cols);
 	Matrix* output = new Matrix(rows, M2.cols);
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < cols; ++j) {
-			output->M->at(i)[j] = this->M->at(i)[j] + M2.M->at(i)[j];
+			output->M->at(i)[j] = this->at(i, j) + M2.at(i, j);
 		}
 	}
 	return output;
@@ -89,7 +137,7 @@ Matrix* Matrix::operator -(float D) {
 	Matrix* output = new Matrix(rows, cols);
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < cols; ++j) {
-			output->M->at(i)[j] = this->M->at(i)[j] - D;
+			output->M->at(i)[j] = this->at(i, j) - D;
 		}
 	}
 	return output;
@@ -177,3 +225,19 @@ float Matrix::sum() {
 	}
 	return sum;
 }
+
+
+
+Matrix* Matrix::operator -(Matrix& M2) {
+	checkDimensionsPlus(M2.rows, M2.cols);
+	Matrix* output = new Matrix(rows, M2.cols);
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			output->M->at(i)[j] = this->M->at(i)[j] - M2.at(i, j);
+		}
+	}
+	return output;
+}
+
+
+

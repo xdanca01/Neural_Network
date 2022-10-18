@@ -1,8 +1,8 @@
 #include "Neuron.hpp"
 #include "Matrix.h"
 
-#define DATA_SIZE 60000
-#define INPUTS 784
+#define DATA_SIZE 4
+#define INPUTS 2
 
 class NeuralNetwork {
 	private:
@@ -27,9 +27,9 @@ class NeuralNetwork {
 		void readExpectedOutput(std::string filename);
 
 		//predict output based on input
-		void forwardPropagation(std::vector<float> &inputNeurons);
+		std::vector<Matrix*> forwardPropagation(std::vector<float> &inputNeurons);
 		std::vector<float> predict();
-		void backpropagation(float expectedOutput);
+		std::vector<Matrix*> backpropagation(float expectedOutput, std::vector<Matrix*> innerPotentials);
 		//Compute gradient with gradient descent method
 		std::vector<std::vector<float>> gradientDescent(int expectedOutput);
 
