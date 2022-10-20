@@ -6,6 +6,8 @@
 //#define INPUTS 784
 #define INPUTS 2
 
+
+
 class NeuralNetwork {
 	private:
 		//Training data
@@ -29,9 +31,9 @@ class NeuralNetwork {
 		void readExpectedOutput(std::string filename);
 
 		//predict output based on input
-		std::vector<Matrix*> forwardPropagation(std::vector<float> &inputNeurons);
+		void forwardPropagation(std::vector<float> &inputNeurons);
 		std::vector<float> predict();
-		std::vector<Matrix*> backpropagation(float expectedOutput, std::vector<Matrix*> innerPotentials);
+		std::vector<Matrix*> backpropagation(float expectedOutput);
 		//Compute gradient with gradient descent method
 		std::vector<std::vector<float>> gradientDescent(int expectedOutput);
 

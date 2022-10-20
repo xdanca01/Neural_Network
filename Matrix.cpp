@@ -74,20 +74,6 @@ Matrix* Matrix::operator *(Matrix &M2) {
 	return output;
 }
 
-Matrix* Matrix::operator *(std::vector<float> vec) {
-	if (rows != 1 || cols != vec.size())
-		throw 789;
-	Matrix* output = new Matrix(rows, cols);
-	//Down M1
-	for (unsigned i = 0; i < rows; ++i) {
-		//Right M1
-		for (unsigned j = 0; j < cols; ++j) {
-			output->M->at(i)[j] = this->at(i, j) * vec[j];
-		}
-	}
-	return output;
-}
-
 Matrix* Matrix::multiply(Matrix& M2) {
 	if (rows != M2.rows || cols != M2.cols)
 		throw 789;
@@ -110,17 +96,6 @@ Matrix* Matrix::multiply(float numb) {
 	return output;
 }
 
-Matrix* Matrix::multiply(std::vector<float>& vec) {
-	if (rows != 1 || cols != vec.size())
-		throw 789;
-	Matrix* output = new Matrix(rows, cols);
-	for (int i = 0; i < rows; ++i) {
-		for (int j = 0; j < cols; ++j) {
-			output->M->at(i)[j] = this->at(i, j) * vec[j];
-		}
-	}
-	return output;
-}
 
 Matrix* Matrix::operator +(Matrix &M2) {
 	checkDimensionsPlus(M2.rows, M2.cols);
@@ -144,6 +119,8 @@ Matrix* Matrix::operator -(float D) {
 }
 
 Matrix* Matrix::subExpectedOutput(float expected) {
+	if (expected+1 > rows)
+		throw 797;
 	Matrix* output = new Matrix(rows, cols);
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < cols; ++j) {

@@ -16,10 +16,8 @@ public:
 	Matrix* dot(Matrix &M2);
 	Matrix* dot(std::vector<float> vec);
 	Matrix* operator *(Matrix &M2);
-	Matrix* operator *(std::vector<float> vec);
 	Matrix* multiply(Matrix& M2);
 	Matrix* multiply(float numb);
-	Matrix* multiply(std::vector<float>& vec);
 	Matrix* operator +(Matrix &M2);
 	Matrix* operator -(float D);
 	Matrix* operator -(Matrix& M2);
