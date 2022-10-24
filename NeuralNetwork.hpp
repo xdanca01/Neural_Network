@@ -5,6 +5,7 @@
 #define DATA_SIZE 4
 //#define INPUTS 784
 #define INPUTS 2
+#define CLASSES 2
 
 
 

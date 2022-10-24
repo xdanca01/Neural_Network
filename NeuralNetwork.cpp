@@ -12,7 +12,7 @@ string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data
 
 //ReLU activation function
 float ReLU(float& innerPotential) {
-	return std::fmax(0.0f, innerPotential);
+	return fmax(0.0f, innerPotential);
 }
 
 float ReLuDerivative(float& innerPotential) {
@@ -20,7 +20,7 @@ float ReLuDerivative(float& innerPotential) {
 }
 
 float softPlus(float& innerPotential) {
-	return std::log(1 + std::exp(innerPotential));
+	return log(1 + exp(innerPotential));
 }
 
 float softPlusDerivative(float& innerPotential) {
@@ -35,18 +35,18 @@ float LogicSigmoidDerivative(float& Y) {
 	return Y * (1 - Y);
 }
 
-NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFile, std::vector<int> &hiddenNeuronsInLayer){
+NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<int> &hiddenNeuronsInLayer){
 	//Fetch training data
 	readData(trainingDataFile);
 	//Fetch labels data
 	readExpectedOutput(labelsFile);
-	std::vector<float> *weightVec;
-	std::vector<float> *biasesVec;
+	vector<float> *weightVec;
+	vector<float> *biasesVec;
 	float bias;
-	std::vector<Neuron> Layer;
+	vector<Neuron> Layer;
 	//Count of layers
 	int Layers = hiddenNeuronsInLayer.size();
-	weightVec = new std::vector<float>(INPUTS);
+	weightVec = new vector<float>(INPUTS);
 	Weights.reserve(Layers);
 	Matrix* M = new Matrix();
 	//Input layer outcoming weights
@@ -61,7 +61,7 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 	//Each hidden layer outcoming weights 
 	for (int layer = 0; layer < Layers-1; ++layer) {
 		M = new Matrix();
-		weightVec = new std::vector<float>(hiddenNeuronsInLayer[layer]);
+		weightVec = new vector<float>(hiddenNeuronsInLayer[layer]);
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
 			for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
 			//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
@@ -75,9 +75,9 @@ NeuralNetwork::NeuralNetwork(std::string trainingDataFile, std::string labelsFil
 	
 	//Set biases
 	for (int layer = 0; layer < Layers; ++layer) {
-		biasesVec = new std::vector<float>(hiddenNeuronsInLayer[layer]);
+		biasesVec = new vector<float>(hiddenNeuronsInLayer[layer]);
 		for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
-			(*biasesVec)[i] = ((float)rand() / RAND_MAX);
+			(*biasesVec)[i] = ((float)rand() / RAND_MAX - 0.5);
 		}
 		Biases.push_back(new Matrix(*biasesVec));
 	}
@@ -97,7 +97,6 @@ void NeuralNetwork::readData(string filename) {
 		cout << "File " << filename << " couldn't be open." << endl;
 		return;
 	}
-
 	int cnt;
 	for (int dataSet = 0; getline(file, line); ++dataSet) {
 		word.clear();
@@ -118,12 +117,11 @@ void NeuralNetwork::readData(string filename) {
 		if (dataSet == 128) {
 			break;
 		}
-		//break;
 	}
 	return;
 }
 
-void NeuralNetwork::readExpectedOutput(std::string filename) {
+void NeuralNetwork::readExpectedOutput(string filename) {
 	fstream file(filename, ios::in);
 	string line;
 	if (!file.is_open()) {
@@ -136,30 +134,43 @@ void NeuralNetwork::readExpectedOutput(std::string filename) {
 	}
 }
 
-void NeuralNetwork::forwardPropagation(std::vector<float> &inputNeurons) {
-	//std::vector<float> InnerPotential = inputNeurons * weights + biases;
-	vector<Matrix*> innerPotentials;
+void NeuralNetwork::forwardPropagation(vector<float> &inputNeurons) {
+	//vector<float> InnerPotential = inputNeurons * weights + biases;
 	Matrix* innerPotential;
+	Matrix* tmp;
+	Matrix* tmp2;
 	Matrix input(inputNeurons);
 	for (int layer = 0; layer < Weights.size(); ++layer) {
 		//W * X + B
 		//input layer
 		if (layer == 0) {
-			innerPotential = *Weights[layer]->dot(*input.transpose()) + *Biases[layer]->transpose();
-			innerPotentials.push_back(innerPotential);
+			tmp = input.transpose();
+			tmp2 = Weights[layer]->dot(*tmp);
+			delete tmp;
+			tmp = Biases[layer]->transpose();
+			innerPotential = *tmp2 + *tmp;
+			delete tmp2, tmp;
+			//innerPotential = *Weights[layer]->dot(*input.transpose()) + *Biases[layer]->transpose();
 		}
 		//W * X + B
 		else {
-			innerPotential = *Weights[layer]->dot(*Y[layer - 1]) +*Biases[layer]->transpose();
-			innerPotentials.push_back(innerPotential);
+			tmp = Weights[layer]->dot(*Y[layer - 1]);
+			tmp2 = Biases[layer]->transpose();
+			innerPotential = *tmp + *tmp2;
+			delete tmp2, tmp;
+			//innerPotential = *Weights[layer]->dot(*Y[layer - 1]) +*Biases[layer]->transpose();
 		}
 		//Sigma(innerState)
+		tmp = Y[layer];
 		if (layer < Weights.size() - 1) {
+			
 			Y[layer] = innerPotential->computeOutput(Fsigm);
 		}
 		else {
 			Y[layer] = innerPotential->softMax();
 		}
+		delete innerPotential;
+		delete tmp;
 	}
 	return;
 }
@@ -168,10 +179,23 @@ vector<Matrix*> NeuralNetwork::backpropagation(float expectedOutput) {
 	vector<float> Dkj;
 	vector<Matrix*> EderY(Y.size());
 	vector<float> sums;
-	//derivative = Yj - Dkj ####### output layer 
+	Matrix* tmpDelete;
+	Matrix* tmpDelete2;
+	//derivative = Yj - Dkj ####### output layer
+	//This computes derivation of mistake E with respect to innerpotential of output layer
 	EderY[EderY.size() - 1] = Y.back()->subExpectedOutput(expectedOutput);
+	//Thic computes derivation of mistake E with respect to innerpotential of all other layers
 	for (int i = Y.size() - 2; i >= 0; --i) {
-		EderY[i] = EderY[i + 1]->multiply(*Y[i + 1]->computeOutput(Fderivative))->transpose()->dot(*Weights[i + 1])->transpose();
+		//
+		tmpDelete = EderY[i + 1]->transpose();
+		tmpDelete2 = tmpDelete->dot(*Weights[i + 1]);
+		delete tmpDelete;
+		tmpDelete = tmpDelete2->transpose();
+		delete tmpDelete2;
+		tmpDelete2 = Y[i]->computeOutput(Fderivative);
+		EderY[i] = tmpDelete->multiply(*tmpDelete2);
+		delete tmpDelete, tmpDelete2;
+		//EderY[i] = EderY[i + 1]->transpose()->dot(*Weights[i + 1])->transpose()->multiply(*Y[i]->computeOutput(Fderivative));
 	}
 	return EderY;
 }
@@ -184,13 +208,16 @@ void NeuralNetwork::trainNetwork() {
 	//[Layer][To][From] weights WITH INPUT LAYER!!!!!!!
 	vector<Matrix*> Eji;
 	vector<Matrix*> dE_dY;
-	vector<Matrix*> dE_dW;
-	vector<Matrix*> previousEji;
+	vector<Matrix*> dE_dY_sum;
+	//vector<Matrix*> previousEji;
+	//vector<Matrix*> previousdE_dY_sum;
 	Matrix* tmp;
-	unsigned batchSize = 2;
-	float stepSize = 0.5, stepSize0 = stepSize;
+	Matrix* tmp2;
+	Matrix* tmp3;
+	unsigned batchSize = 16;
+	float stepSize = 1, stepSize0 = stepSize;
 	unsigned dataSet;
-	for (unsigned cycles = 0; cycles < 200000; ++cycles) {
+	for (unsigned cycles = 0; cycles < 1000; ++cycles) {
 		for (unsigned k = 0; k < batchSize; ++k) {
 			dataSet = rand() % data.size();
 			forwardPropagation(data[dataSet]);
@@ -198,34 +225,98 @@ void NeuralNetwork::trainNetwork() {
 			for (int layer = 0; layer < Y.size(); ++layer) {
 				if (k == 0) {
 					if (layer == 0) {
-						Eji.push_back(dE_dY[layer]->multiply(*Y[layer]->computeOutput(Fderivative))->dot((data[dataSet])));
+						Eji.push_back(dE_dY[layer]->dot(data[dataSet]));
+						dE_dY_sum.push_back(dE_dY[layer]);
 					}
 					else {
-						Eji.push_back(dE_dY[layer]->multiply(*Y[layer]->computeOutput(Fderivative))->dot(*Y[layer - 1]->transpose()));
+						tmp = Y[layer - 1]->transpose();
+						Eji.push_back(dE_dY[layer]->dot(*tmp));
+						delete tmp;
+						//Eji.push_back(dE_dY[layer]->dot(*Y[layer - 1]->transpose()));
+						dE_dY_sum.push_back(dE_dY[layer]);
 					}
 				}
 				else {
-					tmp = Eji[layer];
 					if (layer == 0) {
-						Eji[layer] = *Eji[layer] + (*dE_dY[layer]->multiply(*Y[layer]->computeOutput(Fderivative))->dot((data[dataSet])));
+						tmp = dE_dY[layer]->dot(data[dataSet]);
+						tmp2 = Eji[layer];
+						Eji[layer] = *Eji[layer] + (*tmp);
+						delete tmp, tmp2;
+						//Eji[layer] = *Eji[layer] + (*dE_dY[layer]->dot(data[dataSet]));
+						tmp = dE_dY_sum[layer];
+						dE_dY_sum[layer] = *dE_dY_sum[layer] + *dE_dY[layer];
+						delete tmp;
 					}
 					else {
-						Eji[layer] = *Eji[layer] + (*dE_dY[layer]->multiply(*Y[layer]->computeOutput(Fderivative))->dot(*Y[layer - 1]->transpose()));
+						tmp = Y[layer - 1]->transpose();
+						tmp2 = dE_dY[layer]->dot(*tmp);
+						delete tmp;
+						tmp = Eji[layer];
+						Eji[layer] = *Eji[layer] + *tmp2;
+						delete tmp, tmp2;
+						tmp = dE_dY_sum[layer];
+						//Eji[layer] = *Eji[layer] + (*dE_dY[layer]->dot(*Y[layer - 1]->transpose()));
+						dE_dY_sum[layer] = *dE_dY_sum[layer] + *dE_dY[layer];
+						delete tmp;
 					}
-					delete tmp;
+					delete dE_dY[layer];
 				}
 			}
-			for (auto p : dE_dY) {
-				delete p;
+		}
+		for (int layer = 0; layer < Weights.size(); ++layer) {
+			tmp = Weights[layer];
+			if (cycles) {
+				tmp2 = Eji[layer]->multiply(stepSize / batchSize);
+				Weights[layer] = *Weights[layer] - *tmp2;
+				delete tmp2, tmp, Eji[layer];
+				/*tmp2 = Weights[layer];
+				tmp3 = previousEji[layer]->multiply(0.3)->multiply(stepSize / batchSize);
+				Weights[layer] = *tmp2 - *tmp3;
+				delete previousEji[layer], tmp, tmp3, tmp2;
+				previousEji[layer] = Eji[layer];*/
+
+
+				tmp = Biases[layer];
+				tmp2 = dE_dY_sum[layer]->multiply(stepSize / batchSize);
+				tmp3 = tmp2->transpose();
+				delete tmp2;
+				Biases[layer] = *Biases[layer] - *tmp3;
+				delete tmp, tmp3, dE_dY_sum[layer];
+				/*Biases[layer] = *tmp2 - *previousdE_dY_sum[layer]->multiply(0.3)->multiply(stepSize / batchSize);
+				delete tmp, previousdE_dY_sum[layer];
+				previousdE_dY_sum[layer] = dE_dY_sum[layer]->transpose();*/
+				//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize)->multiply(1.0 / batchSize));// - *previousEji[layer]->multiply(0.1));
 			}
+			else {
+				/*tmp2 = Eji[layer]->multiply(stepSize / batchSize);
+				Weights[layer] = *Weights[layer] - *tmp2;
+				delete tmp2, tmp;
+				previousEji.push_back(Eji[layer]);
+				//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize)->multiply(1.0 / batchSize));*/
+				tmp2 = Eji[layer]->multiply(stepSize / batchSize);
+				Weights[layer] = *Weights[layer] - *tmp2;
+				delete tmp2, tmp, Eji[layer];
+
+				tmp = Biases[layer];
+				tmp2 = dE_dY_sum[layer]->multiply(stepSize / batchSize);
+				tmp3 = tmp2->transpose();
+				delete tmp2;
+				Biases[layer] = *Biases[layer] - *tmp3;
+				delete tmp, tmp3, dE_dY_sum[layer];
+				/*tmp = Biases[layer];
+				tmp2 = dE_dY_sum[layer]->multiply(stepSize / batchSize);
+				tmp3 = tmp2->transpose();
+				Biases[layer] = *Biases[layer] - *tmp3;
+				delete tmp, tmp2, tmp3;
+				previousdE_dY_sum.push_back(dE_dY_sum[layer]->transpose());*/
+			}
+			//Biases[layer] = *Biases[layer] - *(dE_dY_sum[layer]->multiply(stepSize / batchSize))->transpose();
+			//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize / batchSize));
 		}
-		for (int weight = 0; weight < Weights.size(); ++weight) {
-			tmp = Weights[weight];
-			Weights[weight] = *Weights[weight] - *(Eji[weight]->multiply(stepSize));
-			delete tmp;
-		}
+		Eji.clear();
+		dE_dY_sum.clear();
 		predict();
-		stepSize = stepSize0 / (1 + cycles);
+		stepSize = stepSize0;// / (1 + cycles);
 	}
 	//predict();
 	for (auto p : Eji) {
@@ -234,10 +325,10 @@ void NeuralNetwork::trainNetwork() {
 	return;
 }
 
-std::vector<float> NeuralNetwork::predict() {
+vector<float> NeuralNetwork::predict() {
 	vector<float> D = data[0];
 	//forwardPropagation(data[50]);
-	cout << "next cycle" << endl;
+	cout <<  endl;
 	forwardPropagation(D);
 	cout << "input " << this->data[0][0] << "," << this->data[0][1] << " has outputs : " << Y[1]->at(0, 0) << " " << Y[1]->at(1, 0) << endl;
 	D = data[1];
@@ -256,11 +347,10 @@ int main() {
 	/*vector<int> layers{100, 10, 10};
 	NeuralNetwork obj(file1, file2, layers);
 	obj.trainNetwork();*/
-	vector<int> layers{ 2, 2 };
+	vector<int> layers{ 20, 2 };
 	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);
 	cout << "Before:" << endl;
 	obj.predict();
-	cout << "After:" << endl;
 	obj.trainNetwork();
 	//obj.predict();
 }

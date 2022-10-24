@@ -5,7 +5,7 @@
 class Matrix
 {
 private:
-	std::vector<std::vector<float>>* M;
+	std::vector<std::vector<float>> M;
 public:
 	unsigned rows;
 	unsigned cols;
@@ -30,6 +30,9 @@ public:
 	Matrix* computeOutput(float (*func)(float&));
 	Matrix* softMax();
 	Matrix* subExpectedOutput(float expected);
+	Matrix* oneHot(int label, int classes);
+	Matrix* test(int expected);
+	Matrix* jacobian();
 	float sum();
 };
 
