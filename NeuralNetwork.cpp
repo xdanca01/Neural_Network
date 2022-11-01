@@ -5,14 +5,14 @@
 
 using namespace std;
 
-//string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
-//string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
-//string XOR_DATA = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_DATA.txt";
-//string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_LABEL.txt";
-string file1 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
-string file2 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_labels.csv";
-string XOR_DATA = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_DATA.txt";
-string XOR_LABEL = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_LABEL.txt";
+string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
+string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
+string XOR_DATA = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_DATA.txt";
+string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_LABEL.txt";
+//string file1 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
+//string file2 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_labels.csv";
+//string XOR_DATA = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_DATA.txt";
+//string XOR_LABEL = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_LABEL.txt";
 
 //ReLU activation function
 float ReLU(float& innerPotential) {
@@ -39,6 +39,10 @@ float LogicSigmoidDerivative(float& Y) {
 	return Y * (1 - Y);
 }
 
+unsigned NeuralNetwork::argMax() {
+	return Y.back().argMax();
+}
+
 NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<int>& hiddenNeuronsInLayer) {
 	//Fetch training data
 	readData(trainingDataFile);
@@ -58,7 +62,7 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 	for (int j = 0; j < hiddenNeuronsInLayer[0]; ++j) {
 		for (int i = 0; i < INPUTS; ++i) {
 			//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-			(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5f);
+			(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5f)/10;
 		}
 		M.addRow(*weightVec);
 	}
@@ -71,7 +75,7 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
 			for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
 				//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-				(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5);
+				(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5)/10;
 			}
 			M.addRow(*weightVec);
 		}
@@ -82,7 +86,7 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 	for (int layer = 0; layer < Layers; ++layer) {
 		biasesVec = new vector<float>(hiddenNeuronsInLayer[layer]);
 		for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
-			(*biasesVec)[i] = ((float)rand() / RAND_MAX - 0.5);
+			(*biasesVec)[i] = ((float)rand() / RAND_MAX)/10;
 		}
 		Biases.push_back(Matrix::Matrix(*biasesVec));
 	}
@@ -119,7 +123,7 @@ void NeuralNetwork::readData(string filename) {
 		}
 		this->data[dataSet][cnt] = stof(word);
 		//TODO - remove for dataset, shorter reading only for testing
-		if (dataSet == 128) {
+		if (dataSet+1 == DATA_SIZE) {
 			break;
 		}
 	}
@@ -137,6 +141,9 @@ void NeuralNetwork::readExpectedOutput(string filename) {
 	for (int i = 0; getline(file, line); ++i) {
 		// reading predictions (as float)
 		this->labels[i] = stof(line);  
+		if (i + 1 == DATA_SIZE) {
+			break;
+		}
 	}
 }
 
@@ -213,13 +220,13 @@ void NeuralNetwork::trainNetwork() {
 	Matrix tmp;
 	Matrix tmp2;
 	Matrix tmp3;
-	unsigned batchSize = 16;
-	float stepSize = 1, stepSize0 = stepSize;
+	unsigned batchSize = 128;
+	float stepSize = 0.001, stepSize0 = stepSize;
 	unsigned dataSet;
 
 	// Number of cycles = for training the neural network 
 	// For testing memory - change to 10000+
-	for (unsigned cycles = 0; cycles < 10000; ++cycles) {
+	for (unsigned cycles = 0; cycles < 100; ++cycles) {
 		for (unsigned k = 0; k < batchSize; ++k) {
 			dataSet = rand() % data.size();
 			forwardPropagation(data[dataSet]);
@@ -300,36 +307,30 @@ void NeuralNetwork::trainNetwork() {
 		Eji.clear();
 		dE_dY_sum.clear();
 		predict();
-		stepSize = stepSize0;// / (1 + cycles);
+		stepSize = stepSize0/ (1 + cycles);
 	}
 	//predict();
 	return;
 }
 
-vector<float> NeuralNetwork::predict() {
-	vector<float> D = data[0];
-	//forwardPropagation(data[50]);
-	cout << endl;
-	forwardPropagation(D);
-	cout << "input " << this->data[0][0] << "," << this->data[0][1] << " has outputs : " << Y[1].at(0, 0) << " " << Y[1].at(1, 0) << endl;
-	D = data[1];
-	forwardPropagation(D);
-	cout << "input " << this->data[1][0] << "," << this->data[1][1] << " has outputs: " << Y[1].at(0, 0) << " " << Y[1].at(1, 0) << endl;
-	D = data[2];
-	forwardPropagation(D);
-	cout << "input " << this->data[2][0] << "," << this->data[2][1] << " has outputs: " << Y[1].at(0, 0) << " " << Y[1].at(1, 0) << endl;
-	D = data[3];
-	forwardPropagation(D);
-	cout << "input " << this->data[3][0] << "," << this->data[3][1] << " has outputs: " << Y[1].at(0, 0) << " " << Y[1].at(1, 0) << endl;
-	return D;
+void NeuralNetwork::predict() {
+	unsigned sameLabels = 0;
+	unsigned label;
+	for (unsigned i = 0; i < DATA_SIZE; ++i) {
+		forwardPropagation(data[i]);
+		label = argMax();
+		if (label == labels[i]) {
+			++sameLabels;
+		}
+	}
+	cout << "Succesfully predicted labels: " << (float)sameLabels / data.size() << endl;
 }
 
 int main() {
-	/*vector<int> layers{100, 10, 10};
+	vector<int> layers{128, 32, 10};
 	NeuralNetwork obj(file1, file2, layers);
-	obj.trainNetwork();*/
-	vector<int> layers{ 20, 2 };
-	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);
+	/*vector<int> layers{20, 2};
+	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);*/
 	cout << "Before:" << endl;
 	obj.predict();
 	obj.trainNetwork();

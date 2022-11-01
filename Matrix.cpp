@@ -254,3 +254,13 @@ Matrix Matrix::jacobian() {
 	}
 	return output;
 }
+
+unsigned Matrix::argMax() {
+	unsigned biggest = 0;
+	for (unsigned i = 1; i < rows; ++i) {
+		if (M[biggest][0] < M[i][0]) {
+			biggest = i;
+		}
+	}
+	return biggest;
+}

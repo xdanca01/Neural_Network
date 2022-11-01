@@ -35,4 +35,5 @@ public:
 	Matrix test(int expected);
 	Matrix jacobian();
 	float sum();
+	unsigned argMax();
 };
