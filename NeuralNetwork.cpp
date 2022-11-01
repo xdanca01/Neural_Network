@@ -217,7 +217,9 @@ void NeuralNetwork::trainNetwork() {
 	unsigned batchSize = 16;
 	float stepSize = 1, stepSize0 = stepSize;
 	unsigned dataSet;
+	//Learning cycles
 	for (unsigned cycles = 0; cycles < 1000; ++cycles) {
+		//Compute gradients
 		for (unsigned k = 0; k < batchSize; ++k) {
 			dataSet = rand() % data.size();
 			forwardPropagation(data[dataSet]);
@@ -318,10 +320,6 @@ void NeuralNetwork::trainNetwork() {
 		predict();
 		stepSize = stepSize0;// / (1 + cycles);
 	}
-	//predict();
-	for (auto p : Eji) {
-		delete p;
-	}
 	return;
 }
 
@@ -330,7 +328,7 @@ vector<float> NeuralNetwork::predict() {
 	//forwardPropagation(data[50]);
 	cout <<  endl;
 	forwardPropagation(D);
-	cout << "input " << this->data[0][0] << "," << this->data[0][1] << " has outputs : " << Y[1]->at(0, 0) << " " << Y[1]->at(1, 0) << endl;
+	cout << "input " << this->data[0][0] << "," << this->data[0][1] << " has outputs: " << Y[1]->at(0, 0) << " " << Y[1]->at(1, 0) << endl;
 	D = data[1];
 	forwardPropagation(D);
 	cout << "input " << this->data[1][0] << "," << this->data[1][1] << " has outputs: " << Y[1]->at(0, 0) << " " << Y[1]->at(1, 0) << endl;
@@ -347,7 +345,7 @@ int main() {
 	/*vector<int> layers{100, 10, 10};
 	NeuralNetwork obj(file1, file2, layers);
 	obj.trainNetwork();*/
-	vector<int> layers{ 20, 2 };
+	vector<int> layers{ 6, 2 };
 	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);
 	cout << "Before:" << endl;
 	obj.predict();
