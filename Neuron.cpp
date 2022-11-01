@@ -1,11 +1,11 @@
 #include "Neuron.hpp"
 
 Neuron::Neuron(std::vector<float> w, float b) {
-	W = w;
-	B = b;
+	W = w; // width 
+	B = b; // bias
 }
 
-void Neuron::computeState(std::vector<int> &X) {
+void Neuron::computeState(std::vector<int>& X) {
 	float innerPotential = B;
 	//Compute dot product of Weights * Input
 	for (int i = 0; i < X.size(); ++i) {
@@ -16,7 +16,7 @@ void Neuron::computeState(std::vector<int> &X) {
 	Y = LogicSigmoid(innerPotential, 1);
 }
 
-float Neuron::innerPotential(std::vector<Neuron> &X) {
+float Neuron::innerPotential(std::vector<Neuron>& X) {
 	float innerPotential = B;
 	//Compute dot product of Weights * Input
 	for (int i = 0; i < X.size(); ++i) {
@@ -25,7 +25,7 @@ float Neuron::innerPotential(std::vector<Neuron> &X) {
 	return innerPotential;
 }
 
-void Neuron::computeState(std::vector<Neuron> &X) {
+void Neuron::computeState(std::vector<Neuron>& X) {
 	float innerPotential = B;
 	//Compute dot product of Weights * Input
 	for (int i = 0; i < X.size(); ++i) {
@@ -50,20 +50,19 @@ float Neuron::softPlus(float innerPotential) {
 }
 
 float softPlusDerivative(float innerPotential) {
-	return 1 / (1 + exp(-innerPotential));
+	return 1 / (1 + exp(-innerPotential)); // SHOULD USE std::exp INSTEAD?
 }
 
 float Neuron::LogicSigmoid(float innerPotential, float lambda) {
-	return 1 / (1 + exp(-lambda * innerPotential));
+	return 1 / (1 + exp(-lambda * innerPotential)); // SHOULD USE std::exp INSTEAD?
 }
 
 float Neuron::LogicSigmoidDerivative(float lambda) {
-	return lambda * Y * (1 - Y);
+	return lambda * Y * (1 - Y); // Y NEED TO BE CALCULATED FIRST
 }
 
-void Neuron::updateWeights(std::vector<float> &gradient, float learningRate) {
+void Neuron::updateWeights(std::vector<float>& gradient, float learningRate) {
 	for (int i = 0; i < W.size(); ++i) {
 		W[i] -= gradient[i] * learningRate;
 	}
 }
-
