@@ -1,11 +1,12 @@
 #include "Neuron.hpp"
 #include "Matrix.h"
+#include <omp.h>
 
 //#define DATA_SIZE 60000
-#define DATA_SIZE 4
-//#define INPUTS 784
-#define INPUTS 2
-#define CLASSES 2
+#define DATA_SIZE 512
+#define INPUTS 784
+#define CLASSES 10
+#define THREAD_COUNT 8
 
 class NeuralNetwork {
 private:
@@ -35,12 +36,14 @@ public:
 
 	//predict output based on input
 	void forwardPropagation(std::vector<float>& inputNeurons);
-	std::vector<float> predict();
+	void predict();
 	std::vector<Matrix> backpropagation(float expectedOutput);
 
 	//Compute gradient with gradient descent method
 	std::vector<std::vector<float>> gradientDescent(int expectedOutput);
 
 	void trainNetwork();
+
+	unsigned argMax();
 	//ReLU activation function
 };
