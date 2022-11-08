@@ -8,7 +8,7 @@ Neuron::Neuron(std::vector<float> w, float b) {
 void Neuron::computeState(std::vector<int>& X) {
 	float innerPotential = B;
 	//Compute dot product of Weights * Input
-	for (int i = 0; i < X.size(); ++i) {
+	for (unsigned i = 0; i < X.size(); ++i) {
 		innerPotential += X[i] * W[i];
 	}
 	//TODO set function specific for Neuron
@@ -19,7 +19,7 @@ void Neuron::computeState(std::vector<int>& X) {
 float Neuron::innerPotential(std::vector<Neuron>& X) {
 	float innerPotential = B;
 	//Compute dot product of Weights * Input
-	for (int i = 0; i < X.size(); ++i) {
+	for (unsigned i = 0; i < X.size(); ++i) {
 		innerPotential += X[i].Y * W[i];
 	}
 	return innerPotential;
@@ -28,7 +28,7 @@ float Neuron::innerPotential(std::vector<Neuron>& X) {
 void Neuron::computeState(std::vector<Neuron>& X) {
 	float innerPotential = B;
 	//Compute dot product of Weights * Input
-	for (int i = 0; i < X.size(); ++i) {
+	for (unsigned i = 0; i < X.size(); ++i) {
 		innerPotential += X[i].Y * W[i];
 	}
 	//TODO set function specific for Neuron
@@ -62,7 +62,7 @@ float Neuron::LogicSigmoidDerivative(float lambda) {
 }
 
 void Neuron::updateWeights(std::vector<float>& gradient, float learningRate) {
-	for (int i = 0; i < W.size(); ++i) {
+	for (unsigned i = 0; i < W.size(); ++i) {
 		W[i] -= gradient[i] * learningRate;
 	}
 }
