@@ -4,9 +4,9 @@
 #include <random>
 #include <ctime>
 
-//#define DATA_SIZE 60000
-#define DATA_SIZE 2048
-#define PREDICT_SIZE 1000
+#define DATA_SIZE 60000
+//#define DATA_SIZE 2048
+#define PREDICT_SIZE 10000
 //#define DATA_SIZE 4
 #define INPUTS 784
 //#define INPUTS 2

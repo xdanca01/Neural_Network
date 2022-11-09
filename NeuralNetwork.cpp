@@ -50,6 +50,7 @@ unsigned NeuralNetwork::argMaxThreads(int thread) {
 }
 
 NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<int>& hiddenNeuronsInLayer) {
+
 	//Fetch training data
 	readData(trainingDataFile, false);
 	//Fetch predict data
@@ -112,47 +113,59 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 
 void NeuralNetwork::readData(string filename, bool compare) {
 	
+	int sizeToRead;
 	if (compare == false) {
 		data = vector<vector<float>>(DATA_SIZE, vector<float>(INPUTS, 0));
+		sizeToRead = DATA_SIZE;
 	}
 	else {
 		dataForCompare = vector<vector<float>>(PREDICT_SIZE, vector<float>(INPUTS, 0));
+		sizeToRead = PREDICT_SIZE;
 	}
 	//open file for read-only
 	fstream file(filename, ios::in);
-	string word, line;
 	if (!file.is_open()) {
 		cout << "File " << filename << " couldn't be open." << endl;
 		return;
 	}
-	int cnt;
-	for (int dataSet = 0; getline(file, line); ++dataSet) {
-		word.clear();
-		cnt = 0;
-		for (unsigned i = 0; i < line.size(); ++i) {
+
+	vector<string> fileData;
+	string line;
+	// Read all data in single thread
+	for (int dataSet = 0; dataSet + 1 <= DATA_SIZE; ++dataSet) {
+		getline(file, line);
+		fileData.push_back(line);
+	}
+
+	#pragma omp parallel for num_threads(THREAD_NUM)
+	for (int index = 0; index < sizeToRead; ++index) {
+		string word;
+		int cnt = 0;
+
+		for (int i = 0; i < (fileData[index]).size(); ++i) { // fileData[index] == line from file
 			//delimiter
-			if (line[i] == ',') {
+			if ((fileData[index])[i] == ',') {
 				if (compare == false) {
-					this->data[dataSet][cnt] = stof(word);
+					this->data[index][cnt] = stof(word);
 				}
 				else {
-					this->dataForCompare[dataSet][cnt] = stof(word);
+					this->dataForCompare[index][cnt] = stof(word);
 				}
 				++cnt;
 				word.clear();
 			}
 			else {
-				word.push_back(line[i]);
+				word.push_back((fileData[index])[i]);
 			}
 		}
 		if (compare == false) {
-			this->data[dataSet][cnt] = stof(word);
+			this->data[index][cnt] = stof(word);
 		}
 		else {
-			this->dataForCompare[dataSet][cnt] = stof(word);
+			this->dataForCompare[index][cnt] = stof(word);
 		}
 		//TODO - remove for dataset, shorter reading only for testing
-		if ((dataSet+1 == DATA_SIZE && compare == false) || (dataSet + 1 == PREDICT_SIZE && compare == true)) {
+		if ((index+1 == DATA_SIZE && compare == false) || (index + 1 == PREDICT_SIZE && compare == true)) {
 			break;
 		}
 	}
@@ -435,7 +448,7 @@ void NeuralNetwork::trainNetworkThreads() {
 	// For testing memory - change to 10000+
 	time_t cycleTime = std::time(nullptr);
 	for (unsigned cycles = 0; cycles < 10000; ++cycles) {
-		cout << cycles << endl;
+		//cout << cycles << endl;
 		for (unsigned layer = 0; layer < Y2[0].size(); ++layer) {
 			if (layer == 0) {
 				Eji.push_back(Matrix(Y2[0][layer].rows, 784));
@@ -543,7 +556,7 @@ void NeuralNetwork::trainNetworkThreads() {
 			stepSize = 0.001;
 			predict();
 		}
-		if (pred == 10) {
+		if (pred == 50) {
 			time_t newTime = std::time(nullptr);
 			cout << newTime - cycleTime << endl;
 			cycleTime = newTime;
@@ -567,7 +580,6 @@ omp_init_lock(&writelock);
 			++sameLabels;
 			omp_unset_lock(&writelock);
 		}
-		//cout << omp_get_thread_num() << endl;
 	}
 	cout << "Succesfully predicted labels: " << (float)sameLabels / dataForCompare.size() << endl;
 }
