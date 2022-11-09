@@ -14,7 +14,7 @@ public:
 	Matrix();
 	Matrix(unsigned R, unsigned C);
 	Matrix dot(Matrix& M2);
-	Matrix dot(std::vector<float> vec);
+	Matrix dot(std::vector<float>& vec);
 	Matrix operator *(Matrix& M2);
 	Matrix multiply(Matrix& M2);
 	Matrix multiply(float numb);
@@ -22,7 +22,8 @@ public:
 	Matrix operator -(float D);
 	Matrix operator -(Matrix& M2);
 	Matrix transpose();
-	void addRow(std::vector<float> vec);
+	void addRow(std::vector<float>& vec);
+	Matrix transposeDotTranspose(Matrix& M2);
 
 	//Exception if dimensions are not same
 	void checkDimensions(unsigned bRows);
