@@ -31,6 +31,7 @@ public:
 	Matrix transpose();
 	void addRow(std::vector<float>& vec);
 	Matrix transposeDotTranspose(Matrix& M2);
+	Matrix transposeDot(Matrix& M2);
 
 	//Exception if dimensions are not same
 	void checkDimensions(unsigned bRows);

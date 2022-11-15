@@ -146,14 +146,18 @@ void NeuralNetwork::readData(string filename, bool compare) {
 
 	vector<string> fileData;
 	string line;
+	int index = 0;
 	// Read all data in single thread
-	for (int dataSet = 0; dataSet + 1 <= DATA_SIZE; ++dataSet) {
-		getline(file, line);
-		fileData.push_back(line);
+	while(getline(file, line)){
+		fileData.emplace_back(line);
+		if ((index + 1 == DATA_SIZE && compare == false) || (index + 1 == PREDICT_SIZE && compare == true)) {
+			break;
+		}
+		++index;
 	}
 
-#pragma omp parallel for num_threads(THREAD_NUM)
-	for (int index = 0; index < sizeToRead; ++index) {
+	#pragma omp parallel for num_threads(THREAD_NUM)
+	for (int index = 0; index < fileData.size(); ++index) {
 		string word;
 		int cnt = 0;
 
@@ -196,13 +200,20 @@ void NeuralNetwork::readExpectedOutput(string filename, bool compare) {
 		return;
 	}
 
+	if (compare == false) {
+		labels.reserve(DATA_SIZE);
+	}
+	else {
+		labelsForCompare.reserve(PREDICT_SIZE);
+	}
+
 	for (int i = 0; getline(file, line); ++i) {
 		// reading predictions (as float)
 		if (compare == false) {
-			this->labels[i] = stof(line);
+			this->labels.push_back(stof(line));
 		}
 		else {
-			this->labelsForCompare[i] = stof(line);
+			this->labelsForCompare.push_back(stof(line));
 		}
 		if ((i + 1 == DATA_SIZE && compare == false) || (i + 1 == PREDICT_SIZE && compare == true)) {
 			break;
@@ -318,6 +329,7 @@ vector<Matrix> NeuralNetwork::backpropagation(float expectedOutput, int thread) 
 	for (int i = Y2[thread].size() - 2; i >= 0; --i) {
 		tmpDelete = EderY[i + 1].transpose();
 		tmpDelete2 = tmpDelete.dot(Weights[i + 1]);
+		//tmpDelete2 = EderY[i + 1].transposeDot(Weights[i + 1]);
 		tmpDelete = tmpDelete2.transpose();
 		/***********It should be faster, but it's not WTF********/
 		//tmpDelete = EderY[i + 1].transposeDotTranspose(Weights[i + 1]);
@@ -453,7 +465,7 @@ void NeuralNetwork::trainNetworkThreads() {
 	//vector<Matrix*> previousEji;
 	//vector<Matrix*> previousdE_dY_sum;
 	int batchSize = 100;
-	float stepSize = 0.01f, stepSize0 = stepSize;
+	float stepSize = 0.001f, stepSize0 = stepSize;
 	omp_lock_t layerLockEji[3], layerLockdE[3];
 	for (unsigned i = 0; i < Y2[0].size(); ++i) {
 		omp_init_lock(&layerLockEji[i]);
@@ -568,13 +580,12 @@ void NeuralNetwork::trainNetworkThreads() {
 		dE_dY_sum.clear();
 		int pred = cycles % 600;
 		if (pred == 599) {
-			stepSize = 0.001;
-			predict();
-		}
-		if (pred == 50) {
+			//stepSize = stepSize / 2.0f;
 			time_t newTime = std::time(nullptr);
 			cout << newTime - cycleTime << endl;
-			cycleTime = newTime;
+			predict();
+			cycleTime = std::time(nullptr);
+			stepSize /= 2.0f;
 		}
 	}
 	//predict();
@@ -601,7 +612,7 @@ void NeuralNetwork::predict() {
 }
 
 int main() {
-	vector<int> layers{ 128, 50, 10 };
+	vector<int> layers{190, 55, 10};
 	NeuralNetwork obj(file1, file2, layers);
 	/*vector<int> layers{20, 2};
 	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);*/
