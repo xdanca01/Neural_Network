@@ -13,13 +13,13 @@
 //#define INPUTS 2
 #define CLASSES 10
 //#define CLASSES 2
-#define THREAD_NUM 12
+#define THREAD_NUM 8
 
 class NeuralNetwork {
 private:
 	//Training data
-	std::vector<std::vector<float>> data;
-	std::vector<std::vector<float>> dataForCompare;
+	std::vector<std::vector<float> > data;
+	std::vector<std::vector<float> > dataForCompare;
 
 	//Training data labels
 	std::vector<float> labels;
@@ -31,7 +31,7 @@ private:
 
 	//[Layer][Neuron][0] Vec
 	std::vector<Matrix> Y;
-	std::vector<std::vector<Matrix>> Y2;
+	std::vector<std::vector<Matrix> > Y2;
 
 	//[Layer][Neuron][0] Vec
 	std::vector<Matrix> Biases;
@@ -53,7 +53,7 @@ public:
 	std::vector<Matrix> backpropagation(float expectedOutput, int thread);
 
 	//Compute gradient with gradient descent method
-	std::vector<std::vector<float>> gradientDescent(int expectedOutput);
+	std::vector<std::vector<float> > gradientDescent(int expectedOutput);
 
 	void trainNetwork();
 	void trainNetworkThreads();

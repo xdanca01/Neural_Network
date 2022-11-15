@@ -34,7 +34,7 @@ Matrix::Matrix() {
 
 Matrix Matrix::dot(Matrix& M2) {
 	checkDimensions(M2.rows);
-	Matrix output = Matrix::Matrix(rows, M2.cols);
+	Matrix output = Matrix(rows, M2.cols);
 
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {
@@ -50,7 +50,7 @@ Matrix Matrix::dot(Matrix& M2) {
 
 Matrix Matrix::dot(std::vector<float>& vec) {
 	checkDimensions(1);
-	Matrix output = Matrix::Matrix(rows, vec.size());
+	Matrix output = Matrix(rows, vec.size());
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right M1
@@ -64,7 +64,7 @@ Matrix Matrix::dot(std::vector<float>& vec) {
 Matrix Matrix::operator *(Matrix& M2) {
 	if (rows != M2.rows || cols != M2.cols)
 		throw 789;
-	Matrix output = Matrix::Matrix(rows, cols);
+	Matrix output = Matrix(rows, cols);
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right M1
@@ -79,7 +79,7 @@ Matrix Matrix::multiply(Matrix& M2) {
 	if (rows != M2.rows || cols != M2.cols)
 		throw 789;
 
-	Matrix output = Matrix::Matrix(rows, cols);
+	Matrix output = Matrix(rows, cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
 			output.M[i][j] = this->at(i, j) * M2.at(i, j);
@@ -89,7 +89,7 @@ Matrix Matrix::multiply(Matrix& M2) {
 }
 
 Matrix Matrix::multiply(float numb) {
-	Matrix output = Matrix::Matrix(rows, cols);
+	Matrix output = Matrix(rows, cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
 			output.M[i][j] = this->at(i, j) * numb;
@@ -100,7 +100,7 @@ Matrix Matrix::multiply(float numb) {
 
 Matrix Matrix::operator +(Matrix& M2) {
 	checkDimensionsPlus(M2.rows, M2.cols);
-	Matrix output = Matrix::Matrix(rows, M2.cols);
+	Matrix output = Matrix(rows, M2.cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
 			output.M[i][j] = this->at(i, j) + M2.at(i, j);
@@ -110,7 +110,7 @@ Matrix Matrix::operator +(Matrix& M2) {
 }
 
 Matrix Matrix::operator -(float D) {
-	Matrix output = Matrix::Matrix(rows, cols);
+	Matrix output = Matrix(rows, cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
 			output.M[i][j] = this->at(i, j) - D;
@@ -123,7 +123,7 @@ Matrix Matrix::subExpectedOutput(float expected) {
 	if (expected + 1 > rows)
 		throw 797;
 
-	Matrix output = Matrix::Matrix(rows, cols);
+	Matrix output = Matrix(rows, cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
 			//if row == expected output, then subtract -1 from the value network computed
@@ -151,7 +151,7 @@ float Matrix::at(unsigned row, unsigned col) {
 }
 
 Matrix Matrix::transpose() {
-	Matrix output = Matrix::Matrix(cols, rows);
+	Matrix output = Matrix(cols, rows);
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right M1
 		for (unsigned j = 0; j < cols; ++j) {
@@ -162,7 +162,7 @@ Matrix Matrix::transpose() {
 }
 
 Matrix Matrix::computeOutput(float (func)(float&)) {
-	Matrix output = Matrix::Matrix(rows, cols);
+	Matrix output = Matrix(rows, cols);
 	//Down
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right
@@ -176,11 +176,11 @@ Matrix Matrix::computeOutput(float (func)(float&)) {
 Matrix Matrix::softMax() {
 	float sum = 0.0f;
 	float numb = 0.0f;
-	Matrix output = Matrix::Matrix(rows, cols);
+	Matrix output = Matrix(rows, cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right
 		for (unsigned j = 0; j < cols; ++j) {
-			numb = exp(M[i][j]);
+			numb = std::exp(M[i][j]);
 			output.M[i][j] = numb;
 			sum += numb;
 		}
@@ -207,7 +207,7 @@ float Matrix::sum() {
 
 Matrix Matrix::operator -(Matrix& M2) {
 	checkDimensionsPlus(M2.rows, M2.cols);
-	Matrix output = Matrix::Matrix(rows, M2.cols);
+	Matrix output = Matrix(rows, M2.cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
 			output.M[i][j] = this->M[i][j] - M2.at(i, j);
@@ -217,13 +217,13 @@ Matrix Matrix::operator -(Matrix& M2) {
 }
 
 Matrix Matrix::oneHot(int label, int classes) {
-	Matrix output = Matrix::Matrix(classes, 1);
+	Matrix output = Matrix(classes, 1);
 	output.M[label][0] = 1.0;
 	return output;
 }
 
 Matrix Matrix::test(int expected) {
-	Matrix output = Matrix::Matrix(rows, 1);
+	Matrix output = Matrix(rows, 1);
 	for (unsigned i = 0; i < rows; ++i) {
 		//d = 1
 		if (i == expected) {
@@ -238,7 +238,7 @@ Matrix Matrix::test(int expected) {
 }
 
 Matrix Matrix::jacobian() {
-	Matrix output = Matrix::Matrix(rows, rows);
+	Matrix output = Matrix(rows, rows);
 	float s1 = 0.0, s2 = 0.0;
 	for (unsigned row = 0; row < rows; ++row) {
 		for (unsigned col = 0; col < rows; ++col) {
@@ -267,7 +267,7 @@ unsigned Matrix::argMax() {
 
 Matrix Matrix::transposeDotTranspose(Matrix& M2) {
 	//checkDimensions(M2.rows);
-	Matrix output = Matrix::Matrix(M2.cols, cols);
+	Matrix output = Matrix(M2.cols, cols);
 
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {

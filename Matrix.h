@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <vector>
 #include <algorithm>
 #include <string_view>
@@ -11,11 +12,11 @@
 class Matrix
 {
 private:
-	std::vector<std::vector<float>> M;
+	std::vector<std::vector<float> > M;
 public:
 	unsigned rows;
 	unsigned cols;
-	Matrix(std::vector<std::vector<float>>& input);
+	Matrix(std::vector<std::vector<float> >& input);
 	Matrix(std::vector<float>& input);
 	Matrix();
 	Matrix(unsigned R, unsigned C);
