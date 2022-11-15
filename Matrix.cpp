@@ -281,3 +281,20 @@ Matrix Matrix::transposeDotTranspose(Matrix& M2) {
 
 	return output;
 }
+
+Matrix Matrix::transposeDot(Matrix& M2) {
+	//checkDimensions(M2.rows);
+	Matrix output = Matrix::Matrix(cols, M2.cols);
+
+	//Down M1
+	for (unsigned i = 0; i < rows; ++i) {
+		//Right M1
+		for (unsigned j = 0; j < cols; ++j) {
+			for (unsigned k = 0; k < M2.cols; ++k) {
+				output.M[j][k] += this->at(i, j) * M2.at(i, k);
+			}
+		}
+	}
+
+	return output;
+}

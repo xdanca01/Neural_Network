@@ -1,6 +1,12 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
+#include <string_view>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdlib>
 
 class Matrix
 {
@@ -24,6 +30,7 @@ public:
 	Matrix transpose();
 	void addRow(std::vector<float>& vec);
 	Matrix transposeDotTranspose(Matrix& M2);
+	Matrix transposeDot(Matrix& M2);
 
 	//Exception if dimensions are not same
 	void checkDimensions(unsigned bRows);

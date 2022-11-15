@@ -1,12 +1,13 @@
-#include "Neuron.hpp"
+
 #include "Matrix.h"
 #include <omp.h>
 #include <random>
 #include <ctime>
 
 #define DATA_SIZE 60000
-//#define DATA_SIZE 2048
+//#define DATA_SIZE 20
 #define PREDICT_SIZE 10000
+//#define PREDICT_SIZE 10
 //#define DATA_SIZE 4
 #define INPUTS 784
 //#define INPUTS 2
@@ -21,9 +22,9 @@ private:
 	std::vector<std::vector<float>> dataForCompare;
 
 	//Training data labels
-	float labels[DATA_SIZE];
+	std::vector<float> labels;
 	//Data labels to predict
-	float labelsForCompare[PREDICT_SIZE];
+	std::vector<float> labelsForCompare;
 
 	//[Layer][To][From]
 	std::vector<Matrix> Weights;
