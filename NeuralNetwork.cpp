@@ -6,12 +6,14 @@
 
 using namespace std;
 
-//string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
-//string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
-//string XOR_DATA = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_DATA.txt";
-//string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_LABEL.txt";
-//string resultData = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_vectors.csv";
-//string resultLabels = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_labels.csv";
+string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
+string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
+string XOR_DATA = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_DATA.txt";
+string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_LABEL.txt";
+string resultData = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_vectors.csv";
+string resultLabels = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_labels.csv";
+string trainPredictions = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\train_predictions.csv";
+string testPredictions = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\test_predictions.csv";
 
 //string file1 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
 //string file2 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_labels.csv";
@@ -23,14 +25,14 @@ using namespace std;
 //string testPredictions = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\test_predictions.csv"; // NEW - OUTPUT
 
 // Aisa
-string file1 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_vectors.csv";
+/*string file1 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_vectors.csv";
 string file2 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_labels.csv";
 string XOR_DATA = "/home/xmahutov/workspace/pv021_project/data/XOR_DATA.txt";
 string XOR_LABEL = "/home/xmahutov/workspace/pv021_project/data/.txt";
 string resultData = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_vectors.csv";
 string resultLabels = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_labels.csv";
 string trainPredictions = "/home/xmahutov/workspace/pv021_project/train_predictions.csv";
-string testPredictions = "/home/xmahutov/workspace/pv021_project/test_predictions.csv";
+string testPredictions = "/home/xmahutov/workspace/pv021_project/test_predictions.csv";*/
 
 //ReLU activation function
 float ReLU(float& innerPotential) {
@@ -364,7 +366,7 @@ void NeuralNetwork::trainNetworkThreads() {
 			EjiThreads[i] = Eji;
 			dE_dY_sumThreads[i] = dE_dY_sum;
 		}
-//#pragma omp parallel for num_threads(THREAD_NUM) // REMOVE THIS FOR AISA: >88% (but slow)
+#pragma omp parallel for num_threads(THREAD_NUM) // REMOVE THIS FOR AISA: >88% (but slow)
 		for (int k = 0; k < batchSize; ++k) {
 			Matrix tmp;
 			Matrix tmp2;
@@ -389,8 +391,8 @@ void NeuralNetwork::trainNetworkThreads() {
 		}
 		for (int i = 0; i < THREAD_NUM; ++i) {
 			for (int layer = 0; layer < (int)Y2[0].size(); ++layer) {
-				Eji[layer] = Eji[layer] + EjiThreads[omp_get_thread_num()][layer];
-				dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY_sumThreads[omp_get_thread_num()][layer];
+				Eji[layer] = Eji[layer] + EjiThreads[i][layer];
+				dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY_sumThreads[i][layer];
 			}
 		}
 #pragma omp parallel for num_threads(THREAD_NUM)
