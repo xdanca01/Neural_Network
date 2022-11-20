@@ -1,5 +1,4 @@
 #include "NeuralNetwork.hpp"
-#include "Matrix.h"
 
 #define Fsigm ReLU
 #define Fderivative ReLuDerivative
