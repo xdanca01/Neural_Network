@@ -1,0 +1,15 @@
+Aisa:
+-----
+
+1. Prihlásenie:                     ssh xmahutov@aisa.fi.muni.cz
+
+2. Adresár pre projekt (Aisa):      aisa:/home/xmahutov/workspace
+
+3. Pridanie 1 súboru:               scp (/path/to/file) xmahutov@aisa.fi.muni.cz:/home/xmahutov/workspace/pv021_project/src
+                                    (https://unix.stackexchange.com/questions/106480/how-to-copy-files-from-one-machine-to-another-using-ssh)
+                            
+4. Pridanie viacerých súborov:      scp -r (path/to/files) -||-
+                                    (https://www.youtube.com/watch?v=fmMg6cyww14)
+                            
+5. Spustenie run.sh z adresára:     ./run.sh
+
