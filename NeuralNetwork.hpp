@@ -1,19 +1,14 @@
-
 #include "Matrix.h"
 #include <omp.h>
 #include <random>
 #include <ctime>
 
 #define DATA_SIZE 60000
-//#define DATA_SIZE 20
 #define PREDICT_SIZE 10000
-//#define PREDICT_SIZE 10
-//#define DATA_SIZE 4
 #define INPUTS 784
-//#define INPUTS 2
 #define CLASSES 10
-//#define CLASSES 2
-#define THREAD_NUM 8
+#define THREAD_NUM 16 // for Aisa
+//#define THREAD_NUM 8
 
 class NeuralNetwork {
 private:
@@ -53,10 +48,13 @@ public:
 	std::vector<Matrix> backpropagation(float expectedOutput, int thread);
 
 	//Compute gradient with gradient descent method
-	std::vector<std::vector<float> > gradientDescent(int expectedOutput);
+	//std::vector<std::vector<float> > gradientDescent(int expectedOutput);
 
-	void trainNetwork();
+	//void trainNetwork();
 	void trainNetworkThreads();
+	//void outputToFile(std::string filename, std::vector<float> writeData);
+	//void writeLabel(std::string filename, int labelIndex);
+	void writeLabelToFile(std::string filename, std::vector<float> writeData, int dataSize);
 
 	unsigned argMax();
 	unsigned argMaxThreads(int thread);

@@ -12,13 +12,15 @@ using namespace std;
 //string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_LABEL.txt";
 //string resultData = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_vectors.csv";
 //string resultLabels = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_labels.csv";
- 
+
 //string file1 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
 //string file2 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_labels.csv";
 //string XOR_DATA = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_DATA.txt";
 //string XOR_LABEL = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_LABEL.txt";
 //string resultData = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_test_vectors.csv";
 //string resultLabels = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_test_labels.csv";
+//string trainPredictions = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\train_predictions.csv"; // NEW - OUTPUT
+//string testPredictions = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\test_predictions.csv"; // NEW - OUTPUT
 
 // Aisa
 string file1 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_vectors.csv";
@@ -27,6 +29,8 @@ string XOR_DATA = "/home/xmahutov/workspace/pv021_project/data/XOR_DATA.txt";
 string XOR_LABEL = "/home/xmahutov/workspace/pv021_project/data/.txt";
 string resultData = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_vectors.csv";
 string resultLabels = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_labels.csv";
+string trainPredictions = "/home/xmahutov/workspace/pv021_project/train_predictions.csv";
+string testPredictions = "/home/xmahutov/workspace/pv021_project/test_predictions.csv";
 
 //ReLU activation function
 float ReLU(float& innerPotential) {
@@ -62,7 +66,6 @@ unsigned NeuralNetwork::argMaxThreads(int thread) {
 }
 
 NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<int>& hiddenNeuronsInLayer) {
-
 	//Fetch training data
 	readData(trainingDataFile, false);
 	//Fetch predict data
@@ -77,8 +80,7 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 	int Layers = hiddenNeuronsInLayer.size();
 	weightVec = new vector<float>(INPUTS);
 	Weights.reserve(Layers);
-	//Matrix M = Matrix::Matrix();
-    Matrix M;
+	Matrix M;
 
 	//Input layer outcoming weights
 	for (int j = 0; j < hiddenNeuronsInLayer[0]; ++j) {
@@ -93,7 +95,7 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 	//Each hidden layer outcoming weights 
 	for (int layer = 0; layer < Layers - 1; ++layer) {
 		// M = Matrix::Matrix();
-        M = Matrix();
+		M = Matrix();
 		weightVec = new vector<float>(hiddenNeuronsInLayer[layer]);
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
 			for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
@@ -111,15 +113,13 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 		for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
 			(*biasesVec)[i] = ((float)rand() / RAND_MAX - 0.5f) / 10;
 		}
-		// Biases.push_back(Matrix::Matrix(*biasesVec));
-        Biases.push_back(Matrix(*biasesVec));
+		Biases.push_back(Matrix(*biasesVec));
 	}
 
 
 	//Set output values to 0
 	for (int layer = 0; layer < Layers; ++layer) {
-		// Y.push_back(Matrix::Matrix(hiddenNeuronsInLayer[layer], 1));
-        Y.push_back(Matrix(hiddenNeuronsInLayer[layer], 1));
+		Y.push_back(Matrix(hiddenNeuronsInLayer[layer], 1));
 	}
 	for (int thread = 0; thread < THREAD_NUM; ++thread) {
 		Y2.push_back(Y);
@@ -128,7 +128,7 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 
 void NeuralNetwork::readData(string filename, bool compare) {
 
-	int sizeToRead;
+	int sizeToRead = 0;
 	if (compare == false) {
 		data = vector<vector<float>>(DATA_SIZE, vector<float>(INPUTS, 0));
 		sizeToRead = DATA_SIZE;
@@ -148,7 +148,7 @@ void NeuralNetwork::readData(string filename, bool compare) {
 	string line;
 	int index = 0;
 	// Read all data in single thread
-	while(getline(file, line)){
+	while (getline(file, line)) {
 		fileData.emplace_back(line);
 		if ((index + 1 == DATA_SIZE && compare == false) || (index + 1 == PREDICT_SIZE && compare == true)) {
 			break;
@@ -156,12 +156,12 @@ void NeuralNetwork::readData(string filename, bool compare) {
 		++index;
 	}
 
-	#pragma omp parallel for num_threads(THREAD_NUM)
-	for (int index = 0; index < fileData.size(); ++index) {
+#pragma omp parallel for num_threads(THREAD_NUM)
+	for (int index = 0; index < (int)fileData.size(); ++index) {
 		string word;
 		int cnt = 0;
 
-		for (int i = 0; i < (int) (fileData[index]).size(); ++i) { // fileData[index] == line from file
+		for (int i = 0; i < (int)(fileData[index]).size(); ++i) { // fileData[index] == line from file
 			//delimiter
 			if ((fileData[index])[i] == ',') {
 				if (compare == false) {
@@ -182,10 +182,6 @@ void NeuralNetwork::readData(string filename, bool compare) {
 		}
 		else {
 			this->dataForCompare[index][cnt] = stof(word);
-		}
-		//TODO - remove for dataset, shorter reading only for testing
-		if ((index + 1 == DATA_SIZE && compare == false) || (index + 1 == PREDICT_SIZE && compare == true)) {
-			break;
 		}
 	}
 	file.close();
@@ -237,14 +233,12 @@ void NeuralNetwork::forwardPropagation(vector<float>& inputNeurons) {
 			tmp2 = Weights[layer].dot(tmp);
 			tmp = Biases[layer].transpose();
 			innerPotential = tmp2 + tmp;
-			//innerPotential = *Weights[layer]->dot(*input.transpose()) + *Biases[layer]->transpose();
 		}
 		//W * X + B
 		else {
 			tmp = Weights[layer].dot(Y[layer - 1]);
 			tmp2 = Biases[layer].transpose();
 			innerPotential = tmp + tmp2;
-			//innerPotential = *Weights[layer]->dot(*Y[layer - 1]) +*Biases[layer]->transpose();
 		}
 		//Sigma(innerState)
 		tmp = Y[layer];
@@ -273,14 +267,12 @@ void NeuralNetwork::forwardPropagation(vector<float>& inputNeurons, int thread) 
 			tmp2 = Weights[layer].dot(tmp);
 			tmp = Biases[layer].transpose();
 			innerPotential = tmp2 + tmp;
-			//innerPotential = *Weights[layer]->dot(*input.transpose()) + *Biases[layer]->transpose();
 		}
 		//W * X + B
 		else {
 			tmp = Weights[layer].dot(Y2[thread][layer - 1]);
 			tmp2 = Biases[layer].transpose();
 			innerPotential = tmp + tmp2;
-			//innerPotential = *Weights[layer]->dot(*Y[layer - 1]) +*Biases[layer]->transpose();
 		}
 		//Sigma(innerState)
 		if (layer < Weights.size() - 1) {
@@ -310,7 +302,6 @@ vector<Matrix> NeuralNetwork::backpropagation(float expectedOutput) {
 		tmpDelete = tmpDelete2.transpose();
 		tmpDelete2 = Y[i].computeOutput(Fderivative);
 		EderY[i] = tmpDelete.multiply(tmpDelete2);
-		//EderY[i] = EderY[i + 1]->transpose()->dot(*Weights[i + 1])->transpose()->multiply(*Y[i]->computeOutput(Fderivative));
 	}
 	return EderY;
 }
@@ -329,126 +320,11 @@ vector<Matrix> NeuralNetwork::backpropagation(float expectedOutput, int thread) 
 	for (int i = Y2[thread].size() - 2; i >= 0; --i) {
 		tmpDelete = EderY[i + 1].transpose();
 		tmpDelete2 = tmpDelete.dot(Weights[i + 1]);
-		//tmpDelete2 = EderY[i + 1].transposeDot(Weights[i + 1]);
 		tmpDelete = tmpDelete2.transpose();
-		/***********It should be faster, but it's not WTF********/
-		//tmpDelete = EderY[i + 1].transposeDotTranspose(Weights[i + 1]);
 		tmpDelete2 = Y2[thread][i].computeOutput(Fderivative);
 		EderY[i] = tmpDelete.multiply(tmpDelete2);
-		//EderY[i] = EderY[i + 1]->transpose()->dot(*Weights[i + 1])->transpose()->multiply(*Y[i]->computeOutput(Fderivative));
 	}
 	return EderY;
-}
-
-void NeuralNetwork::trainNetwork() {
-	//1. forward pass
-	//2. backward pass (backpropagation)
-	//3. compute Der_Ek/Der_Wji
-	//4. sum
-	//[Layer][To][From] weights WITH INPUT LAYER!!!!!!!
-
-	vector<Matrix> Eji;
-	vector<Matrix> dE_dY;
-	vector<Matrix> dE_dY_sum;
-	//vector<Matrix*> previousEji;
-	//vector<Matrix*> previousdE_dY_sum;
-	Matrix tmp;
-	Matrix tmp2;
-	Matrix tmp3;
-	unsigned batchSize = 128;
-	float stepSize = 0.001f, stepSize0 = stepSize;
-
-	// Number of cycles = for training the neural network 
-	// For testing memory - change to 10000+
-
-	for (unsigned cycles = 0; cycles < 100; ++cycles) {
-		for (unsigned k = 0; k < batchSize; ++k) {
-			//thread safe random 
-			std::random_device rd;
-			std::uniform_int_distribution<int> dist(0, data.size() - 1);
-			int dataSet = dist(rd);
-			forwardPropagation(data[dataSet]);
-			dE_dY = backpropagation(labels[dataSet]);
-			for (unsigned layer = 0; layer < Y.size(); ++layer) {
-				if (k == 0) {
-					if (layer == 0) {
-						Eji.push_back(dE_dY[layer].dot(data[dataSet]));
-						dE_dY_sum.push_back(dE_dY[layer]);
-					}
-					else {
-						tmp = Y[layer - 1].transpose();
-						Eji.push_back(dE_dY[layer].dot(tmp));
-						//Eji.push_back(dE_dY[layer]->dot(*Y[layer - 1]->transpose()));
-						dE_dY_sum.push_back(dE_dY[layer]);
-					}
-				}
-				else {
-					if (layer == 0) {
-						tmp = dE_dY[layer].dot(data[dataSet]);
-						tmp2 = Eji[layer];
-						Eji[layer] = Eji[layer] + tmp;
-						//Eji[layer] = *Eji[layer] + (*dE_dY[layer]->dot(data[dataSet]));
-						tmp = dE_dY_sum[layer];
-						dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY[layer];
-					}
-					else {
-						tmp = Y[layer - 1].transpose();
-						tmp2 = dE_dY[layer].dot(tmp);
-						tmp = Eji[layer];
-						Eji[layer] = Eji[layer] + tmp2;
-						tmp = dE_dY_sum[layer];
-						//Eji[layer] = *Eji[layer] + (*dE_dY[layer]->dot(*Y[layer - 1]->transpose()));
-						dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY[layer];
-					}
-				}
-			}
-		}
-		for (unsigned layer = 0; layer < Weights.size(); ++layer) {
-			tmp = Weights[layer];
-			if (cycles) {
-				tmp2 = Eji[layer].multiply(stepSize / batchSize);
-				Weights[layer] = Weights[layer] - tmp2;
-				tmp = Biases[layer];
-				tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
-				tmp3 = tmp2.transpose();
-				Biases[layer] = Biases[layer] - tmp3;
-
-				/*Biases[layer] = *tmp2 - *previousdE_dY_sum[layer]->multiply(0.3)->multiply(stepSize / batchSize);
-				delete tmp, previousdE_dY_sum[layer];
-				previousdE_dY_sum[layer] = dE_dY_sum[layer]->transpose();*/
-				//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize)->multiply(1.0 / batchSize));// - *previousEji[layer]->multiply(0.1));
-			}
-			else {
-				/*tmp2 = Eji[layer]->multiply(stepSize / batchSize);
-				Weights[layer] = *Weights[layer] - *tmp2;
-				delete tmp2, tmp;
-				previousEji.push_back(Eji[layer]);
-				//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize)->multiply(1.0 / batchSize));*/
-
-				tmp2 = Eji[layer].multiply(stepSize / batchSize);
-				Weights[layer] = Weights[layer] - tmp2;
-				tmp = Biases[layer];
-				tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
-				tmp3 = tmp2.transpose();
-				Biases[layer] = Biases[layer] - tmp3;
-
-				/*tmp = Biases[layer];
-				tmp2 = dE_dY_sum[layer]->multiply(stepSize / batchSize);
-				tmp3 = tmp2->transpose();
-				Biases[layer] = *Biases[layer] - *tmp3;
-				delete tmp, tmp2, tmp3;
-				previousdE_dY_sum.push_back(dE_dY_sum[layer]->transpose());*/
-			}
-			//Biases[layer] = *Biases[layer] - *(dE_dY_sum[layer]->multiply(stepSize / batchSize))->transpose();
-			//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize / batchSize));
-		}
-		Eji.clear();
-		dE_dY_sum.clear();
-		predict();
-		stepSize = stepSize0;
-	}
-	//predict();
-	return;
 }
 
 void NeuralNetwork::trainNetworkThreads() {
@@ -458,14 +334,14 @@ void NeuralNetwork::trainNetworkThreads() {
 	//4. sum
 	//[Layer][To][From] weights WITH INPUT LAYER!!!!!!!
 
+	//int labelIndex = 0;
 	vector<Matrix> Eji;
 	vector<Matrix> EjiThreads[THREAD_NUM];
 	vector<Matrix> dE_dY_sum;
 	vector<Matrix> dE_dY_sumThreads[THREAD_NUM];
-	//vector<Matrix*> previousEji;
-	//vector<Matrix*> previousdE_dY_sum;
 	int batchSize = 100;
-	float stepSize = 0.001f, stepSize0 = stepSize;
+	float stepSize = 0.001f;
+	float stepSize0 = stepSize;
 	omp_lock_t layerLockEji[3], layerLockdE[3];
 	for (unsigned i = 0; i < Y2[0].size(); ++i) {
 		omp_init_lock(&layerLockEji[i]);
@@ -475,7 +351,6 @@ void NeuralNetwork::trainNetworkThreads() {
 	// For testing memory - change to 10000+
 	time_t cycleTime = std::time(nullptr);
 	for (unsigned cycles = 0; cycles < 10000; ++cycles) {
-		//cout << cycles << endl;
 		for (unsigned layer = 0; layer < Y2[0].size(); ++layer) {
 			if (layer == 0) {
 				Eji.push_back(Matrix(Y2[0][layer].rows, 784));
@@ -489,55 +364,37 @@ void NeuralNetwork::trainNetworkThreads() {
 			EjiThreads[i] = Eji;
 			dE_dY_sumThreads[i] = dE_dY_sum;
 		}
-#pragma omp parallel for num_threads(THREAD_NUM)
+//#pragma omp parallel for num_threads(THREAD_NUM) // REMOVE THIS FOR AISA: >88% (but slow)
 		for (int k = 0; k < batchSize; ++k) {
 			Matrix tmp;
 			Matrix tmp2;
 			Matrix tmp3;
 			vector<Matrix> dE_dY;
-			//thread safe random 
-			//std::random_device rd;
-			//std::uniform_int_distribution<int> dist(0, data.size()-1);
-			//int dataSet = dist(rd);
 			int dataSet = (cycles * batchSize + k) % DATA_SIZE;
 			forwardPropagation(data[dataSet], omp_get_thread_num());
 			dE_dY = backpropagation(labels[dataSet], omp_get_thread_num());
 			for (unsigned layer = 0; layer < Y2[omp_get_thread_num()].size(); ++layer) {
 				if (layer == 0) {
 					tmp = dE_dY[layer].dot(data[dataSet]);
-					/*omp_set_lock(&layerLockEji[layer]);
-					Eji[layer] = Eji[layer] + tmp;
-					omp_unset_lock(&layerLockEji[layer]);*/
 					EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp;
-					//Eji[layer] = *Eji[layer] + (*dE_dY[layer]->dot(data[dataSet]));
-					/*omp_set_lock(&layerLockdE[layer]);
-					dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY[layer];
-					omp_unset_lock(&layerLockdE[layer]);*/
 					dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
 				}
 				else {
 					tmp = Y[layer - 1].transpose();
 					tmp2 = dE_dY[layer].dot(tmp);
-					/*omp_set_lock(&layerLockEji[layer]);
-					Eji[layer] = Eji[layer] + tmp2;
-					omp_unset_lock(&layerLockEji[layer]);
-					//Eji[layer] = *Eji[layer] + (*dE_dY[layer]->dot(*Y[layer - 1]->transpose()));
-					omp_set_lock(&layerLockdE[layer]);
-					dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY[layer];
-					omp_unset_lock(&layerLockdE[layer]);*/
 					EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp2;
 					dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
 				}
 			}
 		}
 		for (int i = 0; i < THREAD_NUM; ++i) {
-			for (int layer = 0; layer < (int) Y2[0].size(); ++layer) {
+			for (int layer = 0; layer < (int)Y2[0].size(); ++layer) {
 				Eji[layer] = Eji[layer] + EjiThreads[omp_get_thread_num()][layer];
 				dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY_sumThreads[omp_get_thread_num()][layer];
 			}
 		}
 #pragma omp parallel for num_threads(THREAD_NUM)
-		for (int layer = 0; layer < (int) Weights.size(); ++layer) {
+		for (int layer = 0; layer < (int)Weights.size(); ++layer) {
 			Matrix tmp;
 			Matrix tmp2;
 			Matrix tmp3;
@@ -547,49 +404,70 @@ void NeuralNetwork::trainNetworkThreads() {
 				tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
 				tmp3 = tmp2.transpose();
 				Biases[layer] = Biases[layer] - tmp3;
-
-				/*Biases[layer] = *tmp2 - *previousdE_dY_sum[layer]->multiply(0.3)->multiply(stepSize / batchSize);
-				delete tmp, previousdE_dY_sum[layer];
-				previousdE_dY_sum[layer] = dE_dY_sum[layer]->transpose();*/
-				//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize)->multiply(1.0 / batchSize));// - *previousEji[layer]->multiply(0.1));
 			}
 			else {
-				/*tmp2 = Eji[layer]->multiply(stepSize / batchSize);
-				Weights[layer] = *Weights[layer] - *tmp2;
-				delete tmp2, tmp;
-				previousEji.push_back(Eji[layer]);
-				//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize)->multiply(1.0 / batchSize));*/
-
 				tmp2 = Eji[layer].multiply(stepSize / batchSize);
 				Weights[layer] = Weights[layer] - tmp2;
 				tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
 				tmp3 = tmp2.transpose();
 				Biases[layer] = Biases[layer] - tmp3;
-
-				/*tmp = Biases[layer];
-				tmp2 = dE_dY_sum[layer]->multiply(stepSize / batchSize);
-				tmp3 = tmp2->transpose();
-				Biases[layer] = *Biases[layer] - *tmp3;
-				delete tmp, tmp2, tmp3;
-				previousdE_dY_sum.push_back(dE_dY_sum[layer]->transpose());*/
 			}
-			//Biases[layer] = *Biases[layer] - *(dE_dY_sum[layer]->multiply(stepSize / batchSize))->transpose();
-			//Weights[layer] = *Weights[layer] - *(Eji[layer]->multiply(stepSize / batchSize));
 		}
 		Eji.clear();
 		dE_dY_sum.clear();
 		int pred = cycles % 600;
 		if (pred == 599) {
-			//stepSize = stepSize / 2.0f;
 			time_t newTime = std::time(nullptr);
 			cout << newTime - cycleTime << endl;
 			predict();
+			//writeLabel(trainPredictions, labelIndex); // just test
+			//labelIndex += PREDICT_SIZE;
 			cycleTime = std::time(nullptr);
-			stepSize /= 2.0f;
-		}
+		}	
 	}
+
+	//outputToFile(testPredictions, this->labels); // just test
+	writeLabelToFile(testPredictions, this->labels, DATA_SIZE); // NEW 
+	writeLabelToFile(trainPredictions, labelsForCompare, PREDICT_SIZE); // NEW
 	//predict();
 	return;
+}
+
+//void NeuralNetwork::outputToFile(string filename, vector<float> writeData) {
+//	ofstream file;
+//	file.open(filename, ofstream::trunc); // ::trunc = deletes the file when opened
+//
+//	for (int i = 0; i + 1 <= DATA_SIZE; ++i) {
+//		file << writeData[i] << endl;
+//		cout << "this->labels[" << i << "]: " << this->labels[i] << endl;
+//	}
+//	file.close();
+//}
+
+//void NeuralNetwork::writeLabel(string filename, int labelIndex) {
+//	fstream file(filename, ios::out); 
+//
+//	for (int i = labelIndex; i < labelIndex + PREDICT_SIZE; i++) {
+//		file << labelsForCompare[i] << endl;
+//		cout << "lablesForCompare[" << i << "]: " << labelsForCompare[i] << endl;
+//	}
+//	file.close();
+//}
+
+// Write data to output files
+void NeuralNetwork::writeLabelToFile(string filename, vector<float> writeData, int dataSize) {
+	fstream file;
+	file.open(filename, ios::out);
+
+	if (!file.is_open()) {
+		cout << "File " << filename << " couldn't be open." << endl;
+		return;
+	}
+
+	for (int i = 0; i + 1 <= dataSize; ++i) {
+		file << writeData[i] << endl;
+	}
+	file.close();
 }
 
 void NeuralNetwork::predict() {
@@ -607,18 +485,16 @@ void NeuralNetwork::predict() {
 			omp_unset_lock(&writelock);
 		}
 	}
-	// cout << "Succesfully predicted labels: " << (float)sameLabels / dataForCompare.size() << endl;
 	cout << "Succesfully predicted labels: " << (float)sameLabels / (float)dataForCompare.size() << endl;
 }
 
 int main() {
-	vector<int> layers{190, 55, 10};
+	vector<int> layers{ 190, 55, 10 };
 	NeuralNetwork obj(file1, file2, layers);
 	/*vector<int> layers{20, 2};
 	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);*/
+
 	cout << "Before:" << endl;
 	obj.predict();
-	//obj.trainNetwork();
 	obj.trainNetworkThreads();
-	//obj.predict();
 }

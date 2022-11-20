@@ -226,7 +226,7 @@ Matrix Matrix::test(int expected) {
 	Matrix output = Matrix(rows, 1);
 	for (unsigned i = 0; i < rows; ++i) {
 		//d = 1
-		if (i == expected) {
+		if ((int) i == expected) {
 			output.M[i][0] = 1.0f / this->at(i, 0);
 		}
 		//d = 0
@@ -284,7 +284,7 @@ Matrix Matrix::transposeDotTranspose(Matrix& M2) {
 
 Matrix Matrix::transposeDot(Matrix& M2) {
 	//checkDimensions(M2.rows);
-	Matrix output = Matrix::Matrix(cols, M2.cols);
+	Matrix output = Matrix(cols, M2.cols);
 
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {
