@@ -2,12 +2,9 @@
 
 #include <cmath>
 #include <vector>
-#include <algorithm>
-#include <string_view>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstdlib>
 
 class Matrix
 {
