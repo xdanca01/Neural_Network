@@ -7,7 +7,7 @@
 #define PREDICT_SIZE 10000
 #define INPUTS 784
 #define CLASSES 10
-#define THREAD_NUM 16 // for Aisa
+#define THREAD_NUM 12 // for Aisa
 //#define THREAD_NUM 8
 
 class NeuralNetwork {
@@ -43,7 +43,7 @@ public:
 	//predict output based on input
 	void forwardPropagation(std::vector<float>& inputNeurons);
 	void forwardPropagation(std::vector<float>& inputNeurons, int thread);
-	void predict();
+	float predict();
 	std::vector<Matrix> backpropagation(float expectedOutput);
 	std::vector<Matrix> backpropagation(float expectedOutput, int thread);
 

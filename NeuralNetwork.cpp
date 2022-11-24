@@ -340,7 +340,7 @@ void NeuralNetwork::trainNetworkThreads() {
 	vector<Matrix> EjiThreads[THREAD_NUM];
 	vector<Matrix> dE_dY_sum;
 	vector<Matrix> dE_dY_sumThreads[THREAD_NUM];
-	int batchSize = 100;
+	int batchSize = 200;
 	float stepSize = 0.001f;
 	float stepSize0 = stepSize;
 	omp_lock_t layerLockEji[3], layerLockdE[3];
@@ -351,81 +351,86 @@ void NeuralNetwork::trainNetworkThreads() {
 	// Number of cycles = for training the neural network 
 	// For testing memory - change to 10000+
 	time_t cycleTime = std::time(nullptr);
-	for (unsigned cycles = 0; cycles < 10000; ++cycles) {
-		for (unsigned layer = 0; layer < Y2[0].size(); ++layer) {
-			if (layer == 0) {
-				Eji.push_back(Matrix(Y2[0][layer].rows, 784));
-			}
-			else {
-				Eji.push_back(Matrix(Y2[0][layer].rows, Y2[0][layer - 1].rows));
-			}
-			dE_dY_sum.push_back(Matrix(Y2[0][layer].rows, 1));
-		}
-		for (unsigned i = 0; i < THREAD_NUM; ++i) {
-			EjiThreads[i] = Eji;
-			dE_dY_sumThreads[i] = dE_dY_sum;
-		}
-#pragma omp parallel for num_threads(THREAD_NUM) // REMOVE THIS FOR AISA: >88% (but slow)
-		for (int k = 0; k < batchSize; ++k) {
-			Matrix tmp;
-			Matrix tmp2;
-			Matrix tmp3;
-			vector<Matrix> dE_dY;
-			int dataSet = (cycles * batchSize + k) % DATA_SIZE;
-			forwardPropagation(data[dataSet], omp_get_thread_num());
-			dE_dY = backpropagation(labels[dataSet], omp_get_thread_num());
-			for (unsigned layer = 0; layer < Y2[omp_get_thread_num()].size(); ++layer) {
+	float correctlyLabeled = 0.0f;
+	unsigned cyclesCount = DATA_SIZE / batchSize;
+	while (correctlyLabeled < 0.88f) {
+		for (unsigned cycles = 0; cycles < cyclesCount; ++cycles)
+		{
+			for (unsigned layer = 0; layer < Y2[0].size(); ++layer) {
 				if (layer == 0) {
-					tmp = dE_dY[layer].dot(data[dataSet]);
-					EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp;
-					dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
+					Eji.push_back(Matrix(Y2[0][layer].rows, 784));
 				}
 				else {
-					tmp = Y[layer - 1].transpose();
-					tmp2 = dE_dY[layer].dot(tmp);
-					EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp2;
-					dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
+					Eji.push_back(Matrix(Y2[0][layer].rows, Y2[0][layer - 1].rows));
+				}
+				dE_dY_sum.push_back(Matrix(Y2[0][layer].rows, 1));
+			}
+			for (unsigned i = 0; i < THREAD_NUM; ++i) {
+				EjiThreads[i] = Eji;
+				dE_dY_sumThreads[i] = dE_dY_sum;
+			}
+#pragma omp parallel for num_threads(THREAD_NUM) // REMOVE THIS FOR AISA: >88% (but slow)
+			for (int k = 0; k < batchSize; ++k) {
+				Matrix tmp;
+				Matrix tmp2;
+				Matrix tmp3;
+				vector<Matrix> dE_dY;
+				int dataSet = (cycles * batchSize + k) % DATA_SIZE;
+				forwardPropagation(data[dataSet], omp_get_thread_num());
+				dE_dY = backpropagation(labels[dataSet], omp_get_thread_num());
+				for (unsigned layer = 0; layer < Y2[omp_get_thread_num()].size(); ++layer) {
+					if (layer == 0) {
+						tmp = dE_dY[layer].dot(data[dataSet]);
+						//omp_set_lock(&layerLockEji[layer]);
+						EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp;
+						dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
+						//omp_unset_lock(&layerLockEji[layer]);
+					}
+					else {
+						tmp = Y[layer - 1].transpose();
+						tmp2 = dE_dY[layer].dot(tmp);
+						EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp2;
+						dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
+					}
 				}
 			}
-		}
-		for (int i = 0; i < THREAD_NUM; ++i) {
-			for (int layer = 0; layer < (int)Y2[0].size(); ++layer) {
-				Eji[layer] = Eji[layer] + EjiThreads[i][layer];
-				dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY_sumThreads[i][layer];
+			for (int i = 0; i < THREAD_NUM; ++i) {
+				for (int layer = 0; layer < (int)Y2[0].size(); ++layer) {
+					Eji[layer] = Eji[layer] + EjiThreads[i][layer];
+					dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY_sumThreads[i][layer];
+				}
 			}
-		}
 #pragma omp parallel for num_threads(THREAD_NUM)
-		for (int layer = 0; layer < (int)Weights.size(); ++layer) {
-			Matrix tmp;
-			Matrix tmp2;
-			Matrix tmp3;
-			if (cycles) {
-				tmp2 = Eji[layer].multiply(stepSize / batchSize);
-				Weights[layer] = Weights[layer] - tmp2;
-				tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
-				tmp3 = tmp2.transpose();
-				Biases[layer] = Biases[layer] - tmp3;
+			for (int layer = 0; layer < (int)Weights.size(); ++layer) {
+				Matrix tmp;
+				Matrix tmp2;
+				Matrix tmp3;
+				if (cycles) {
+					tmp2 = Eji[layer].multiply(stepSize / batchSize);
+					Weights[layer] = Weights[layer] - tmp2;
+					tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
+					tmp3 = tmp2.transpose();
+					Biases[layer] = Biases[layer] - tmp3;
+				}
+				else {
+					tmp2 = Eji[layer].multiply(stepSize / batchSize);
+					Weights[layer] = Weights[layer] - tmp2;
+					tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
+					tmp3 = tmp2.transpose();
+					Biases[layer] = Biases[layer] - tmp3;
+				}
 			}
-			else {
-				tmp2 = Eji[layer].multiply(stepSize / batchSize);
-				Weights[layer] = Weights[layer] - tmp2;
-				tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
-				tmp3 = tmp2.transpose();
-				Biases[layer] = Biases[layer] - tmp3;
-			}
+			Eji.clear();
+			dE_dY_sum.clear();
 		}
-		Eji.clear();
-		dE_dY_sum.clear();
-		int pred = cycles % 600;
-		if (pred == 599) {
-			time_t newTime = std::time(nullptr);
-			cout << newTime - cycleTime << endl;
-			predict();
-			//writeLabel(trainPredictions, labelIndex); // just test
-			//labelIndex += PREDICT_SIZE;
-			cycleTime = std::time(nullptr);
-		}	
+		correctlyLabeled = predict();
+		time_t newTime = std::time(nullptr);
+		cout << newTime - cycleTime << endl;
+		//writeLabel(trainPredictions, labelIndex); // just test
+		//labelIndex += PREDICT_SIZE;
+		cycleTime = std::time(nullptr);
 	}
+	
 
 	//outputToFile(testPredictions, this->labels); // just test
 	writeLabelToFile(testPredictions, this->labels, DATA_SIZE); // NEW 
@@ -471,7 +476,7 @@ void NeuralNetwork::writeLabelToFile(string filename, vector<float> writeData, i
 	file.close();
 }
 
-void NeuralNetwork::predict() {
+float NeuralNetwork::predict() {
 	unsigned sameLabels = 0;
 	omp_lock_t writelock;
 	omp_init_lock(&writelock);
@@ -487,15 +492,15 @@ void NeuralNetwork::predict() {
 		}
 	}
 	cout << "Succesfully predicted labels: " << (float)sameLabels / (float)dataForCompare.size() << endl;
+	return (float)sameLabels / (float)dataForCompare.size();
 }
 
 int main() {
-	vector<int> layers{ 190, 55, 10 };
+	srand((unsigned int)time(NULL));
+	vector<int> layers{ 230, 64, 10 };
 	NeuralNetwork obj(file1, file2, layers);
 	/*vector<int> layers{20, 2};
 	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);*/
-
-	cout << "Before:" << endl;
 	obj.predict();
 	obj.trainNetworkThreads();
 }
