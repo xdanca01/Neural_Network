@@ -4,7 +4,7 @@
 #define Fderivative ReLuDerivative
 
 using namespace std;
-
+/*
 string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
 string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
 string XOR_DATA = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_DATA.txt";
@@ -12,7 +12,7 @@ string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data
 string resultData = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_vectors.csv";
 string resultLabels = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_labels.csv";
 string trainPredictions = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\train_predictions.csv";
-string testPredictions = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\test_predictions.csv";
+string testPredictions = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\test_predictions.csv";*/
 
 //string file1 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
 //string file2 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_labels.csv";
@@ -32,6 +32,17 @@ string resultData = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_t
 string resultLabels = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_labels.csv";
 string trainPredictions = "/home/xmahutov/workspace/pv021_project/train_predictions.csv";
 string testPredictions = "/home/xmahutov/workspace/pv021_project/test_predictions.csv";*/
+
+// Aisa
+string file1 = "/home/xdancak1/pv021/data/fashion_mnist_train_vectors.csv";
+string file2 = "/home/xdancak1/pv021/data/fashion_mnist_train_labels.csv";
+string XOR_DATA = "/home/xdancak1/pv021/data/XOR_DATA.txt";
+string XOR_LABEL = "/home/xdancak1/pv021/data/XOR_LABEL.txt";
+string resultData = "/home/xdancak1/pv021/data/fashion_mnist_test_vectors.csv";
+string resultLabels = "/home/xdancak1/pv021/data/fashion_mnist_test_labels.csv";
+string trainPredictions = "/home/xdancak1/pv021/train_predictions.csv";
+string testPredictions = "/home/xdancak1/pv021/test_predictions.csv";
+
 
 //ReLU activation function
 float ReLU(float& innerPotential) {
@@ -128,15 +139,11 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 }
 
 void NeuralNetwork::readData(string filename, bool compare) {
-
-	int sizeToRead = 0;
 	if (compare == false) {
 		data = vector<vector<float>>(DATA_SIZE, vector<float>(INPUTS, 0));
-		sizeToRead = DATA_SIZE;
 	}
 	else {
 		dataForCompare = vector<vector<float>>(PREDICT_SIZE, vector<float>(INPUTS, 0));
-		sizeToRead = PREDICT_SIZE;
 	}
 	//open file for read-only
 	fstream file(filename, ios::in);
@@ -340,9 +347,8 @@ void NeuralNetwork::trainNetworkThreads() {
 	vector<Matrix> EjiThreads[THREAD_NUM];
 	vector<Matrix> dE_dY_sum;
 	vector<Matrix> dE_dY_sumThreads[THREAD_NUM];
-	int batchSize = 200;
-	float stepSize = 0.001f;
-	float stepSize0 = stepSize;
+	int batchSize = 48;
+	float stepSize = 0.005f;
 	omp_lock_t layerLockEji[3], layerLockdE[3];
 	for (unsigned i = 0; i < Y2[0].size(); ++i) {
 		omp_init_lock(&layerLockEji[i]);
@@ -429,8 +435,9 @@ void NeuralNetwork::trainNetworkThreads() {
 		//writeLabel(trainPredictions, labelIndex); // just test
 		//labelIndex += PREDICT_SIZE;
 		cycleTime = std::time(nullptr);
+
 	}
-	
+
 
 	//outputToFile(testPredictions, this->labels); // just test
 	writeLabelToFile(testPredictions, this->labels, DATA_SIZE); // NEW 
@@ -497,7 +504,7 @@ float NeuralNetwork::predict() {
 
 int main() {
 	srand((unsigned int)time(NULL));
-	vector<int> layers{ 230, 64, 10 };
+	vector<int> layers{ 256, 64, 10 };
 	NeuralNetwork obj(file1, file2, layers);
 	/*vector<int> layers{20, 2};
 	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);*/
