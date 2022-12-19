@@ -4,44 +4,24 @@
 #define Fderivative ReLuDerivative
 
 using namespace std;
-/*
-string file1 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
-string file2 = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_train_labels.csv";
-string XOR_DATA = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_DATA.txt";
-string XOR_LABEL = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\XOR_LABEL.txt";
-string resultData = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_vectors.csv";
-string resultLabels = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\fashion_mnist_test_labels.csv";
-string trainPredictions = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\train_predictions.csv";
-string testPredictions = "C:\\MUNI\\PV021_Neuronove_site\\Projekt\\pv021_project\\data\\test_predictions.csv";*/
+//// Aisa
+//string file1 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_vectors.csv";
+//string file2 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_labels.csv";
+//string XOR_DATA = "/home/xmahutov/workspace/pv021_project/data/XOR_DATA.txt";
+//string XOR_LABEL = "/home/xmahutov/workspace/pv021_project/data/.txt";
+//string resultData = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_vectors.csv";
+//string resultLabels = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_labels.csv";
+//string trainPredictions = "/home/xmahutov/workspace/pv021_project/train_predictions.csv";
+//string testPredictions = "/home/xmahutov/workspace/pv021_project/test_predictions.csv";
 
-//string file1 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_vectors.csv";
-//string file2 = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_train_labels.csv";
-//string XOR_DATA = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_DATA.txt";
-//string XOR_LABEL = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\XOR_LABEL.txt";
-//string resultData = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_test_vectors.csv";
-//string resultLabels = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\data\\fashion_mnist_test_labels.csv";
-//string trainPredictions = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\train_predictions.csv"; // NEW - OUTPUT
-//string testPredictions = "C:\\Users\\H514045\\MUNI\\PV021\\pv021_project\\test_predictions.csv"; // NEW - OUTPUT
-
-// Aisa
-/*string file1 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_vectors.csv";
-string file2 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_labels.csv";
-string XOR_DATA = "/home/xmahutov/workspace/pv021_project/data/XOR_DATA.txt";
-string XOR_LABEL = "/home/xmahutov/workspace/pv021_project/data/.txt";
-string resultData = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_vectors.csv";
-string resultLabels = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_labels.csv";
-string trainPredictions = "/home/xmahutov/workspace/pv021_project/train_predictions.csv";
-string testPredictions = "/home/xmahutov/workspace/pv021_project/test_predictions.csv";*/
-
-// Aisa
-string file1 = "/home/xdancak1/pv021/data/fashion_mnist_train_vectors.csv";
-string file2 = "/home/xdancak1/pv021/data/fashion_mnist_train_labels.csv";
-string XOR_DATA = "/home/xdancak1/pv021/data/XOR_DATA.txt";
-string XOR_LABEL = "/home/xdancak1/pv021/data/XOR_LABEL.txt";
-string resultData = "/home/xdancak1/pv021/data/fashion_mnist_test_vectors.csv";
-string resultLabels = "/home/xdancak1/pv021/data/fashion_mnist_test_labels.csv";
-string trainPredictions = "/home/xdancak1/pv021/train_predictions.csv";
-string testPredictions = "/home/xdancak1/pv021/test_predictions.csv";
+string file1 = "data/fashion_mnist_train_vectors.csv";
+string file2 = "data/fashion_mnist_train_labels.csv";
+string XOR_DATA = "data/XOR_DATA.txt";
+string XOR_LABEL = "data/XOR_LABEL.txt";
+string resultData = "data/fashion_mnist_test_vectors.csv";
+string resultLabels = "data/fashion_mnist_test_labels.csv";
+string trainPredictions = "train_predictions.csv";
+string testPredictions = "test_predictions.csv";
 
 
 //ReLU activation function
@@ -106,7 +86,6 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 
 	//Each hidden layer outcoming weights 
 	for (int layer = 0; layer < Layers - 1; ++layer) {
-		// M = Matrix::Matrix();
 		M = Matrix();
 		weightVec = new vector<float>(hiddenNeuronsInLayer[layer]);
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
@@ -342,7 +321,6 @@ void NeuralNetwork::trainNetworkThreads() {
 	//4. sum
 	//[Layer][To][From] weights WITH INPUT LAYER!!!!!!!
 
-	//int labelIndex = 0;
 	vector<Matrix> Eji;
 	vector<Matrix> EjiThreads[THREAD_NUM];
 	vector<Matrix> dE_dY_sum;
@@ -355,7 +333,6 @@ void NeuralNetwork::trainNetworkThreads() {
 		omp_init_lock(&layerLockdE[i]);
 	}
 	// Number of cycles = for training the neural network 
-	// For testing memory - change to 10000+
 	time_t cycleTime = std::time(nullptr);
 	float correctlyLabeled = 0.0f;
 	unsigned cyclesCount = DATA_SIZE / batchSize;
@@ -387,10 +364,8 @@ void NeuralNetwork::trainNetworkThreads() {
 				for (unsigned layer = 0; layer < Y2[omp_get_thread_num()].size(); ++layer) {
 					if (layer == 0) {
 						tmp = dE_dY[layer].dot(data[dataSet]);
-						//omp_set_lock(&layerLockEji[layer]);
 						EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp;
 						dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
-						//omp_unset_lock(&layerLockEji[layer]);
 					}
 					else {
 						tmp = Y[layer - 1].transpose();
@@ -432,40 +407,14 @@ void NeuralNetwork::trainNetworkThreads() {
 		correctlyLabeled = predict();
 		time_t newTime = std::time(nullptr);
 		cout << newTime - cycleTime << endl;
-		//writeLabel(trainPredictions, labelIndex); // just test
-		//labelIndex += PREDICT_SIZE;
 		cycleTime = std::time(nullptr);
 
 	}
 
-
-	//outputToFile(testPredictions, this->labels); // just test
-	writeLabelToFile(testPredictions, this->labels, DATA_SIZE); // NEW 
-	writeLabelToFile(trainPredictions, labelsForCompare, PREDICT_SIZE); // NEW
-	//predict();
+	writeLabelToFile(testPredictions, this->labels, DATA_SIZE);  
+	writeLabelToFile(trainPredictions, labelsForCompare, PREDICT_SIZE); 
 	return;
 }
-
-//void NeuralNetwork::outputToFile(string filename, vector<float> writeData) {
-//	ofstream file;
-//	file.open(filename, ofstream::trunc); // ::trunc = deletes the file when opened
-//
-//	for (int i = 0; i + 1 <= DATA_SIZE; ++i) {
-//		file << writeData[i] << endl;
-//		cout << "this->labels[" << i << "]: " << this->labels[i] << endl;
-//	}
-//	file.close();
-//}
-
-//void NeuralNetwork::writeLabel(string filename, int labelIndex) {
-//	fstream file(filename, ios::out); 
-//
-//	for (int i = labelIndex; i < labelIndex + PREDICT_SIZE; i++) {
-//		file << labelsForCompare[i] << endl;
-//		cout << "lablesForCompare[" << i << "]: " << labelsForCompare[i] << endl;
-//	}
-//	file.close();
-//}
 
 // Write data to output files
 void NeuralNetwork::writeLabelToFile(string filename, vector<float> writeData, int dataSize) {
@@ -506,8 +455,6 @@ int main() {
 	srand((unsigned int)time(NULL));
 	vector<int> layers{ 256, 64, 10 };
 	NeuralNetwork obj(file1, file2, layers);
-	/*vector<int> layers{20, 2};
-	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);*/
 	obj.predict();
 	obj.trainNetworkThreads();
 }

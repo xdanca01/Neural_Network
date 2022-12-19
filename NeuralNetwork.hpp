@@ -7,8 +7,7 @@
 #define PREDICT_SIZE 10000
 #define INPUTS 784
 #define CLASSES 10
-#define THREAD_NUM 12 // for Aisa
-//#define THREAD_NUM 8
+#define THREAD_NUM 8 // for Aisa
 
 class NeuralNetwork {
 private:
@@ -47,13 +46,7 @@ public:
 	std::vector<Matrix> backpropagation(float expectedOutput);
 	std::vector<Matrix> backpropagation(float expectedOutput, int thread);
 
-	//Compute gradient with gradient descent method
-	//std::vector<std::vector<float> > gradientDescent(int expectedOutput);
-
-	//void trainNetwork();
 	void trainNetworkThreads();
-	//void outputToFile(std::string filename, std::vector<float> writeData);
-	//void writeLabel(std::string filename, int labelIndex);
 	void writeLabelToFile(std::string filename, std::vector<float> writeData, int dataSize);
 
 	unsigned argMax();
