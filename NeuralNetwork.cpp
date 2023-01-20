@@ -4,15 +4,7 @@
 #define Fderivative ReLuDerivative
 
 using namespace std;
-//// Aisa
-//string file1 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_vectors.csv";
-//string file2 = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_train_labels.csv";
-//string XOR_DATA = "/home/xmahutov/workspace/pv021_project/data/XOR_DATA.txt";
-//string XOR_LABEL = "/home/xmahutov/workspace/pv021_project/data/.txt";
-//string resultData = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_vectors.csv";
-//string resultLabels = "/home/xmahutov/workspace/pv021_project/data/fashion_mnist_test_labels.csv";
-//string trainPredictions = "/home/xmahutov/workspace/pv021_project/train_predictions.csv";
-//string testPredictions = "/home/xmahutov/workspace/pv021_project/test_predictions.csv";
+
 
 string file1 = "data/fashion_mnist_train_vectors.csv";
 string file2 = "data/fashion_mnist_train_labels.csv";
@@ -22,6 +14,7 @@ string resultData = "data/fashion_mnist_test_vectors.csv";
 string resultLabels = "data/fashion_mnist_test_labels.csv";
 string trainPredictions = "train_predictions.csv";
 string testPredictions = "test_predictions.csv";
+
 
 
 //ReLU activation function
@@ -65,6 +58,7 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 	//Fetch training labels
 	readExpectedOutput(labelsFile, false);
 	//Fetch predict labels
+	//TODO comment
 	readExpectedOutput(resultLabels, true);
 	vector<float>* weightVec;
 	vector<float>* biasesVec;
@@ -332,11 +326,13 @@ void NeuralNetwork::trainNetworkThreads() {
 		omp_init_lock(&layerLockEji[i]);
 		omp_init_lock(&layerLockdE[i]);
 	}
+
 	// Number of cycles = for training the neural network 
 	time_t cycleTime = std::time(nullptr);
+
 	float correctlyLabeled = 0.0f;
 	unsigned cyclesCount = DATA_SIZE / batchSize;
-	while (correctlyLabeled < 0.88f) {
+	while (correctlyLabeled < 0.91f) {
 		for (unsigned cycles = 0; cycles < cyclesCount; ++cycles)
 		{
 			for (unsigned layer = 0; layer < Y2[0].size(); ++layer) {
@@ -405,14 +401,26 @@ void NeuralNetwork::trainNetworkThreads() {
 			dE_dY_sum.clear();
 		}
 		correctlyLabeled = predict();
-		time_t newTime = std::time(nullptr);
-		cout << newTime - cycleTime << endl;
-		cycleTime = std::time(nullptr);
 
+		time_t newTime = std::time(nullptr);
+		//TODO comment
+		cout << newTime - cycleTime << endl;
+		//writeLabel(trainPredictions, labelIndex); // just test
+		//labelIndex += PREDICT_SIZE;
+		cycleTime = std::time(nullptr);
 	}
 
-	writeLabelToFile(testPredictions, this->labels, DATA_SIZE);  
-	writeLabelToFile(trainPredictions, labelsForCompare, PREDICT_SIZE); 
+
+	//outputToFile(testPredictions, this->labels); // just test
+	//writeLabelToFile(trainPredictions, this->labels, DATA_SIZE); // NEW 
+	//writeLabelToFile(testPredictions, labelsForCompare, PREDICT_SIZE); // NEW
+	writeToFiles();
+	// time_t newTime = std::time(nullptr);
+    
+	//TODO comment
+	//cout << (int)((newTime - wholeTime)/60.0f) << ":" << (newTime - wholeTime) % 60 << endl;
+	//predict();
+
 	return;
 }
 
@@ -436,25 +444,84 @@ float NeuralNetwork::predict() {
 	unsigned sameLabels = 0;
 	omp_lock_t writelock;
 	omp_init_lock(&writelock);
+	//TODO comment
+//#pragma omp parallel for num_threads(THREAD_NUM)
+	//for (int i = 0; i < PREDICT_SIZE; ++i) {
+		//unsigned label;
+		//forwardPropagation(dataForCompare[i], omp_get_thread_num());
+		//label = argMaxThreads(omp_get_thread_num());
+		//if (label == labelsForCompare[i]) {
+			//omp_set_lock(&writelock);
+			//++sameLabels;
+			//omp_unset_lock(&writelock);
+		//}
+	//}
+	//cout << "Succesfully predicted test labels: " << (float)sameLabels / (float)dataForCompare.size() << endl;
+	//sameLabels = 0;
+	//TODO end comment
 #pragma omp parallel for num_threads(THREAD_NUM)
-	for (int i = 0; i < PREDICT_SIZE; ++i) {
+	for (int i = 0; i < DATA_SIZE; ++i) {
 		unsigned label;
-		forwardPropagation(dataForCompare[i], omp_get_thread_num());
+		forwardPropagation(data[i], omp_get_thread_num());
 		label = argMaxThreads(omp_get_thread_num());
-		if (label == labelsForCompare[i]) {
+		if (label == labels[i]) {
 			omp_set_lock(&writelock);
 			++sameLabels;
 			omp_unset_lock(&writelock);
 		}
 	}
-	cout << "Succesfully predicted labels: " << (float)sameLabels / (float)dataForCompare.size() << endl;
-	return (float)sameLabels / (float)dataForCompare.size();
+	//TODO comment
+	// cout << "Succesfully predicted train labels: " << (float)sameLabels / (float)data.size() << endl;
+	return (float)sameLabels / (float)data.size();
+}
+
+void NeuralNetwork::writeToFiles() {
+	fstream file;
+	file.open(trainPredictions, ios::out);
+
+	if (!file.is_open()) {
+		cout << "File " << trainPredictions << " couldn't be open." << endl;
+		return;
+	}
+	int labels[DATA_SIZE];
+
+	#pragma omp parallel for num_threads(THREAD_NUM)
+	for (int i = 0; i < DATA_SIZE; ++i) {
+		forwardPropagation(data[i], omp_get_thread_num());
+		labels[i] = argMaxThreads(omp_get_thread_num());
+	}
+
+	for (int i = 0; i < DATA_SIZE; ++i) {
+		file << labels[i] << endl;
+	}
+	file.close();
+
+	file.open(testPredictions, ios::out);
+
+	if (!file.is_open()) {
+		cout << "File " << testPredictions << " couldn't be open." << endl;
+		return;
+	}
+
+	#pragma omp parallel for num_threads(THREAD_NUM)
+	for (int i = 0; i < PREDICT_SIZE; ++i) {
+		forwardPropagation(dataForCompare[i], omp_get_thread_num());
+		labels[i] = argMaxThreads(omp_get_thread_num());
+	}
+
+	for (int i = 0; i < PREDICT_SIZE; ++i) {
+		file << labels[i] << endl;
+	}
+
+	file.close();
 }
 
 int main() {
-	srand((unsigned int)time(NULL));
+	srand(2);
+	//srand((unsigned int)time(NULL));
 	vector<int> layers{ 256, 64, 10 };
 	NeuralNetwork obj(file1, file2, layers);
+
 	obj.predict();
 	obj.trainNetworkThreads();
 }

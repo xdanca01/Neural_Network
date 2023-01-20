@@ -7,7 +7,9 @@
 #define PREDICT_SIZE 10000
 #define INPUTS 784
 #define CLASSES 10
-#define THREAD_NUM 8 // for Aisa
+#define THREAD_NUM 16 // for Aisa
+//#define THREAD_NUM 8
+
 
 class NeuralNetwork {
 private:
@@ -45,7 +47,9 @@ public:
 	float predict();
 	std::vector<Matrix> backpropagation(float expectedOutput);
 	std::vector<Matrix> backpropagation(float expectedOutput, int thread);
+	void writeToFiles();
 
+	//void trainNetwork();
 	void trainNetworkThreads();
 	void writeLabelToFile(std::string filename, std::vector<float> writeData, int dataSize);
 
