@@ -5,6 +5,7 @@
 
 using namespace std;
 
+
 string file1 = "data/fashion_mnist_train_vectors.csv";
 string file2 = "data/fashion_mnist_train_labels.csv";
 string XOR_DATA = "data/XOR_DATA.txt";
@@ -79,7 +80,6 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 
 	//Each hidden layer outcoming weights 
 	for (int layer = 0; layer < Layers - 1; ++layer) {
-		// M = Matrix::Matrix();
 		M = Matrix();
 		weightVec = new vector<float>(hiddenNeuronsInLayer[layer]);
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
@@ -327,8 +327,9 @@ void NeuralNetwork::trainNetworkThreads() {
 		omp_init_lock(&layerLockdE[i]);
 	}
 
-	//time_t cycleTime = std::time(nullptr);
-	//time_t wholeTime = cycleTime;
+	// Number of cycles = for training the neural network 
+	time_t cycleTime = std::time(nullptr);
+
 	float correctlyLabeled = 0.0f;
 	unsigned cyclesCount = DATA_SIZE / batchSize;
 	while (correctlyLabeled < 0.91f) {
@@ -400,12 +401,13 @@ void NeuralNetwork::trainNetworkThreads() {
 			dE_dY_sum.clear();
 		}
 		correctlyLabeled = predict();
-		// time_t newTime = std::time(nullptr);
+
+		time_t newTime = std::time(nullptr);
 		//TODO comment
-		// cout << newTime - cycleTime << endl;
+		cout << newTime - cycleTime << endl;
 		//writeLabel(trainPredictions, labelIndex); // just test
 		//labelIndex += PREDICT_SIZE;
-		// cycleTime = std::time(nullptr);
+		cycleTime = std::time(nullptr);
 	}
 
 
@@ -418,29 +420,9 @@ void NeuralNetwork::trainNetworkThreads() {
 	//TODO comment
 	//cout << (int)((newTime - wholeTime)/60.0f) << ":" << (newTime - wholeTime) % 60 << endl;
 	//predict();
+
 	return;
 }
-
-//void NeuralNetwork::outputToFile(string filename, vector<float> writeData) {
-//	ofstream file;
-//	file.open(filename, ofstream::trunc); // ::trunc = deletes the file when opened
-//
-//	for (int i = 0; i + 1 <= DATA_SIZE; ++i) {
-//		file << writeData[i] << endl;
-//		cout << "this->labels[" << i << "]: " << this->labels[i] << endl;
-//	}
-//	file.close();
-//}
-
-//void NeuralNetwork::writeLabel(string filename, int labelIndex) {
-//	fstream file(filename, ios::out); 
-//
-//	for (int i = labelIndex; i < labelIndex + PREDICT_SIZE; i++) {
-//		file << labelsForCompare[i] << endl;
-//		cout << "lablesForCompare[" << i << "]: " << labelsForCompare[i] << endl;
-//	}
-//	file.close();
-//}
 
 // Write data to output files
 void NeuralNetwork::writeLabelToFile(string filename, vector<float> writeData, int dataSize) {
@@ -539,9 +521,7 @@ int main() {
 	//srand((unsigned int)time(NULL));
 	vector<int> layers{ 256, 64, 10 };
 	NeuralNetwork obj(file1, file2, layers);
-	/*vector<int> layers{20, 2};
-	NeuralNetwork obj(XOR_DATA, XOR_LABEL, layers);*/
-	//TODO comment
-	//obj.predict();
+
+	obj.predict();
 	obj.trainNetworkThreads();
 }

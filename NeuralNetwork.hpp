@@ -10,6 +10,7 @@
 #define THREAD_NUM 16 // for Aisa
 //#define THREAD_NUM 8
 
+
 class NeuralNetwork {
 private:
 	//Training data
