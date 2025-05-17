@@ -1,23 +1,49 @@
 #include "Matrix.h"
 
-Matrix::Matrix(std::vector<std::vector<float>>& input) {
-	M = std::vector<std::vector<float>>(input);
-	rows = input.size();
-	cols = input[0].size();
+Matrix::Matrix(const std::vector<std::vector<float>>& input) : M(input), rows(input.size()), cols(input[0].size()) {}
+
+Matrix::Matrix(std::vector<std::vector<float>>&& input) : M(std::move(input)), rows(input.size()), cols(input[0].size()) {}
+
+Matrix::Matrix(const std::vector<float>& input) : M(1, input), rows(1), cols(input.size()) {}
+
+Matrix::Matrix(std::vector<float>&& input) : M(1, std::move(input)), rows(1), cols(input.size()) {}
+
+Matrix& Matrix::operator=(Matrix&& other) noexcept {
+	if (this != &other) {
+		M = std::move(other.M);
+		rows = other.rows;
+		cols = other.cols;
+		other.rows = 0;
+		other.cols = 0;
+	}
+	return *this;
 }
 
-Matrix::Matrix(std::vector<float>& input) {
-	M = std::vector<std::vector<float>>(1, input);
-	rows = 1;
-	cols = input.size();
+Matrix::Matrix(Matrix&& other) noexcept
+	: M(std::move(other.M)), rows(other.rows), cols(other.cols) {
+	other.rows = 0;
+	other.cols = 0;
+}
+Matrix::Matrix(const Matrix& other) noexcept : M(other.M), rows(other.rows), cols(other.cols) {}
+
+
+Matrix& Matrix::operator=(const Matrix& other) noexcept {
+	if (this != &other) {
+		M = other.M;
+		rows = other.rows;
+		cols = other.cols;
+	}
+	return *this;
 }
 
-void Matrix::addRow(std::vector<float>& vec) {
-	M.push_back(vec);
-	rows += 1;
+
+
+void Matrix::addRow(std::vector<float>&& vec) {
 	if (cols == 0) {
 		cols = vec.size();
 	}
+	M.emplace_back(std::move(vec));
+	rows += 1;
 }
 
 Matrix::Matrix(unsigned R, unsigned C) {
@@ -61,62 +87,84 @@ Matrix Matrix::dot(std::vector<float>& vec) {
 	return output;
 }
 
-Matrix Matrix::operator *(Matrix& M2) {
+Matrix& Matrix::operator *(Matrix& M2) {
 	if (rows != M2.rows || cols != M2.cols)
 		throw 789;
-	Matrix output = Matrix(rows, cols);
 	//Down M1
 	for (unsigned i = 0; i < rows; ++i) {
 		//Right M1
 		for (unsigned j = 0; j < cols; ++j) {
-			output.M[i][j] = this->at(i, j) * M2.at(i, j);
+			this->M[i][j] *= M2.at(i, j);
 		}
 	}
-	return output;
+	return *this;
 }
 
-Matrix Matrix::multiply(Matrix& M2) {
+Matrix& Matrix::operator *(float numb) {
+	for (unsigned i = 0; i < rows; ++i) {
+		for (unsigned j = 0; j < cols; ++j) {
+			this->M[i][j] *= numb;
+		}
+	}
+	return *this;
+}
+
+Matrix& Matrix::multiply(Matrix& M2) {
 	if (rows != M2.rows || cols != M2.cols)
 		throw 789;
-
-	Matrix output = Matrix(rows, cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
-			output.M[i][j] = this->at(i, j) * M2.at(i, j);
+			this->M[i][j] *= M2.at(i, j);
 		}
 	}
-	return output;
+	return *this;
 }
 
-Matrix Matrix::multiply(float numb) {
-	Matrix output = Matrix(rows, cols);
+Matrix& Matrix::multiply(float numb) {
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
-			output.M[i][j] = this->at(i, j) * numb;
+			this->M[i][j] *= numb;
 		}
 	}
-	return output;
+	return *this;
 }
 
-Matrix Matrix::operator +(Matrix& M2) {
+Matrix& Matrix::operator +(Matrix& M2) {
 	checkDimensionsPlus(M2.rows, M2.cols);
-	Matrix output = Matrix(rows, M2.cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
-			output.M[i][j] = this->at(i, j) + M2.at(i, j);
+			this->M[i][j] += M2.at(i, j);
 		}
 	}
-	return output;
+	return *this;
 }
 
-Matrix Matrix::operator -(float D) {
-	Matrix output = Matrix(rows, cols);
+Matrix& Matrix::operator +=(Matrix& M2) {
+	checkDimensionsPlus(M2.rows, M2.cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
-			output.M[i][j] = this->at(i, j) - D;
+			this->M[i][j] += M2.at(i, j);
 		}
 	}
-	return output;
+	return *this;
+}
+
+Matrix& Matrix::operator -(float D) {
+	for (unsigned i = 0; i < rows; ++i) {
+		for (unsigned j = 0; j < cols; ++j) {
+			this->M[i][j] -= D;
+		}
+	}
+	return *this;
+}
+
+Matrix& Matrix::operator -=(float D) {
+	for (unsigned i = 0; i < rows; ++i) {
+		for (unsigned j = 0; j < cols; ++j) {
+			this->M[i][j] -= D;
+		}
+	}
+	return *this;
 }
 
 Matrix Matrix::subExpectedOutput(float expected) {
@@ -205,16 +253,26 @@ float Matrix::sum() {
 	return sum;
 }
 
-Matrix Matrix::operator -(Matrix& M2) {
+Matrix& Matrix::operator -(Matrix& M2) {
 	checkDimensionsPlus(M2.rows, M2.cols);
-	Matrix output = Matrix(rows, M2.cols);
 	for (unsigned i = 0; i < rows; ++i) {
 		for (unsigned j = 0; j < cols; ++j) {
-			output.M[i][j] = this->M[i][j] - M2.at(i, j);
+			this->M[i][j] -= M2.at(i, j);
 		}
 	}
-	return output;
+	return *this;
 }
+
+Matrix& Matrix::operator -=(Matrix& M2) {
+	checkDimensionsPlus(M2.rows, M2.cols);
+	for (unsigned i = 0; i < rows; ++i) {
+		for (unsigned j = 0; j < cols; ++j) {
+			this->M[i][j] -= M2.at(i, j);
+		}
+	}
+	return *this;
+}
+
 
 Matrix Matrix::oneHot(int label, int classes) {
 	Matrix output = Matrix(classes, 1);

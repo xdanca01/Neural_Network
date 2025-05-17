@@ -50,7 +50,11 @@ unsigned NeuralNetwork::argMaxThreads(int thread) {
 	return Y2[thread].back().argMax();
 }
 
-NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<int>& hiddenNeuronsInLayer) {
+float randomWeight(int par){
+	return ((float)rand() / RAND_MAX - 0.5f) / par;
+}
+
+NeuralNetwork::NeuralNetwork(const string& trainingDataFile, const string& labelsFile, const vector<int>& hiddenNeuronsInLayer) {
 	//Fetch training data
 	readData(trainingDataFile, false);
 	//Fetch predict data
@@ -64,54 +68,59 @@ NeuralNetwork::NeuralNetwork(string trainingDataFile, string labelsFile, vector<
 	vector<float>* biasesVec;
 	//Count of layers
 	int Layers = hiddenNeuronsInLayer.size();
-	weightVec = new vector<float>(INPUTS);
 	Weights.reserve(Layers);
+	Biases.reserve(Layers);
+	Y.reserve(Layers);
+	Y2.reserve(THREAD_NUM);
 	Matrix M;
-
-	//Input layer outcoming weights
+	int weightFactor = 10;
+	// Input layer weights
 	for (int j = 0; j < hiddenNeuronsInLayer[0]; ++j) {
+		vector<float> weightVec(INPUTS);
 		for (int i = 0; i < INPUTS; ++i) {
-			//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-			(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5f) / 10;
+			weightVec[i] = randomWeight(weightFactor);
 		}
-		M.addRow(*weightVec);
+		M.addRow(std::move(weightVec));
 	}
-	Weights.push_back(M);
+	Weights.emplace_back(M);
 
-	//Each hidden layer outcoming weights 
+	// Hidden layers
 	for (int layer = 0; layer < Layers - 1; ++layer) {
-		M = Matrix();
-		weightVec = new vector<float>(hiddenNeuronsInLayer[layer]);
+		Matrix M2;
 		for (int j = 0; j < hiddenNeuronsInLayer[layer + 1]; ++j) {
+			vector<float> weightVec(hiddenNeuronsInLayer[layer]);
 			for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
-				//RAND_MAX is max number that rand can return so the randomNumber is <-0.05,0.05>
-				(*weightVec)[i] = ((float)rand() / RAND_MAX - 0.5f) / 10;
+				weightVec[i] = randomWeight(weightFactor);
 			}
-			M.addRow(*weightVec);
+			M2.addRow(std::move(weightVec));
 		}
-		Weights.push_back(M);
+		Weights.emplace_back(M2);
 	}
 
-	//Set biases
+	// Biases
 	for (int layer = 0; layer < Layers; ++layer) {
-		biasesVec = new vector<float>(hiddenNeuronsInLayer[layer]);
+		vector<float> biasesVec(hiddenNeuronsInLayer[layer]);
 		for (int i = 0; i < hiddenNeuronsInLayer[layer]; ++i) {
-			(*biasesVec)[i] = ((float)rand() / RAND_MAX - 0.5f) / 10;
+			biasesVec[i] = randomWeight(weightFactor);
 		}
-		Biases.push_back(Matrix(*biasesVec));
+		Biases.emplace_back(Matrix(biasesVec));
 	}
 
-
-	//Set output values to 0
+	// Output values
 	for (int layer = 0; layer < Layers; ++layer) {
-		Y.push_back(Matrix(hiddenNeuronsInLayer[layer], 1));
+		Y.emplace_back(Matrix(hiddenNeuronsInLayer[layer], 1));
 	}
 	for (int thread = 0; thread < THREAD_NUM; ++thread) {
-		Y2.push_back(Y);
+		Y2.emplace_back(Y);
 	}
 }
 
-void NeuralNetwork::readData(string filename, bool compare) {
+float normalizeData(float num)
+{
+	return num; ((num / 255.f) - 0.1307f / 0.3081f);
+}
+
+void NeuralNetwork::readData(const string& filename, bool compare) {
 	if (compare == false) {
 		data = vector<vector<float>>(DATA_SIZE, vector<float>(INPUTS, 0));
 	}
@@ -130,7 +139,7 @@ void NeuralNetwork::readData(string filename, bool compare) {
 	int index = 0;
 	// Read all data in single thread
 	while (getline(file, line)) {
-		fileData.emplace_back(line);
+		fileData.emplace_back(std::move(line));
 		if ((index + 1 == DATA_SIZE && compare == false) || (index + 1 == PREDICT_SIZE && compare == true)) {
 			break;
 		}
@@ -146,10 +155,10 @@ void NeuralNetwork::readData(string filename, bool compare) {
 			//delimiter
 			if ((fileData[index])[i] == ',') {
 				if (compare == false) {
-					this->data[index][cnt] = stof(word);
+					this->data[index][cnt] = normalizeData(stof(word));
 				}
 				else {
-					this->dataForCompare[index][cnt] = stof(word);
+					this->dataForCompare[index][cnt] = normalizeData(stof(word));
 				}
 				++cnt;
 				word.clear();
@@ -159,17 +168,17 @@ void NeuralNetwork::readData(string filename, bool compare) {
 			}
 		}
 		if (compare == false) {
-			this->data[index][cnt] = stof(word);
+			this->data[index][cnt] = normalizeData(stof(word));
 		}
 		else {
-			this->dataForCompare[index][cnt] = stof(word);
+			this->dataForCompare[index][cnt] = normalizeData(stof(word));
 		}
 	}
 	file.close();
 	return;
 }
 
-void NeuralNetwork::readExpectedOutput(string filename, bool compare) {
+void NeuralNetwork::readExpectedOutput(const string& filename, bool compare) {
 	fstream file(filename, ios::in);
 	string line;
 	if (!file.is_open()) {
@@ -187,10 +196,10 @@ void NeuralNetwork::readExpectedOutput(string filename, bool compare) {
 	for (int i = 0; getline(file, line); ++i) {
 		// reading predictions (as float)
 		if (compare == false) {
-			this->labels.push_back(stof(line));
+			this->labels.emplace_back(stof(line));
 		}
 		else {
-			this->labelsForCompare.push_back(stof(line));
+			this->labelsForCompare.emplace_back(stof(line));
 		}
 		if ((i + 1 == DATA_SIZE && compare == false) || (i + 1 == PREDICT_SIZE && compare == true)) {
 			break;
@@ -199,7 +208,7 @@ void NeuralNetwork::readExpectedOutput(string filename, bool compare) {
 	file.close();
 }
 
-void NeuralNetwork::forwardPropagation(vector<float>& inputNeurons) {
+void NeuralNetwork::forwardPropagation(const vector<float>& inputNeurons) {
 	//vector<float> InnerPotential = inputNeurons * weights + biases;
 	Matrix innerPotential;
 	Matrix tmp;
@@ -210,30 +219,29 @@ void NeuralNetwork::forwardPropagation(vector<float>& inputNeurons) {
 		//W * X + B
 		//input layer
 		if (layer == 0) {
-			tmp = input.transpose();
-			tmp2 = Weights[layer].dot(tmp);
-			tmp = Biases[layer].transpose();
-			innerPotential = tmp2 + tmp;
+			tmp = std::move(input.transpose());
+			tmp2 = std::move(Weights[layer].dot(tmp));
+			tmp = std::move(Biases[layer].transpose());
+			innerPotential = std::move(tmp2 + tmp);
 		}
 		//W * X + B
 		else {
-			tmp = Weights[layer].dot(Y[layer - 1]);
-			tmp2 = Biases[layer].transpose();
-			innerPotential = tmp + tmp2;
+			tmp = std::move(Weights[layer].dot(Y[layer - 1]));
+			tmp2 = std::move(Biases[layer].transpose());
+			innerPotential = std::move(tmp + tmp2);
 		}
 		//Sigma(innerState)
-		tmp = Y[layer];
 		if (layer < Weights.size() - 1) {
-			Y[layer] = innerPotential.computeOutput(Fsigm);
+			Y[layer] = std::move(innerPotential.computeOutput(Fsigm));
 		}
 		else {
-			Y[layer] = innerPotential.softMax();
+			Y[layer] = std::move(innerPotential.softMax());
 		}
 	}
 	return;
 }
 
-void NeuralNetwork::forwardPropagation(vector<float>& inputNeurons, int thread) {
+void NeuralNetwork::forwardPropagation(const vector<float>& inputNeurons, int thread) {
 	//vector<float> InnerPotential = inputNeurons * weights + biases;
 	Matrix innerPotential;
 	Matrix tmp;
@@ -244,23 +252,23 @@ void NeuralNetwork::forwardPropagation(vector<float>& inputNeurons, int thread) 
 		//W * X + B
 		//input layer
 		if (layer == 0) {
-			tmp = input.transpose();
-			tmp2 = Weights[layer].dot(tmp);
-			tmp = Biases[layer].transpose();
-			innerPotential = tmp2 + tmp;
+			tmp = std::move(input.transpose());
+			tmp2 = std::move(Weights[layer].dot(tmp));
+			tmp = std::move(Biases[layer].transpose());
+			innerPotential = std::move(tmp2 + tmp);
 		}
 		//W * X + B
 		else {
-			tmp = Weights[layer].dot(Y2[thread][layer - 1]);
-			tmp2 = Biases[layer].transpose();
-			innerPotential = tmp + tmp2;
+			tmp = std::move(Weights[layer].dot(Y2[thread][layer - 1]));
+			tmp2 = std::move(Biases[layer].transpose());
+			innerPotential = std::move(tmp + tmp2);
 		}
 		//Sigma(innerState)
 		if (layer < Weights.size() - 1) {
-			Y2[thread][layer] = innerPotential.computeOutput(Fsigm);
+			Y2[thread][layer] = std::move(innerPotential.computeOutput(Fsigm));
 		}
 		else {
-			Y2[thread][layer] = innerPotential.softMax();
+			Y2[thread][layer] = std::move(innerPotential.softMax());
 		}
 	}
 	return;
@@ -278,11 +286,11 @@ vector<Matrix> NeuralNetwork::backpropagation(float expectedOutput) {
 	EderY[EderY.size() - 1] = Y.back().subExpectedOutput(expectedOutput);
 	//Thic computes derivation of mistake E with respect to innerpotential of all other layers
 	for (int i = Y.size() - 2; i >= 0; --i) {
-		tmpDelete = EderY[i + 1].transpose();
-		tmpDelete2 = tmpDelete.dot(Weights[i + 1]);
-		tmpDelete = tmpDelete2.transpose();
-		tmpDelete2 = Y[i].computeOutput(Fderivative);
-		EderY[i] = tmpDelete.multiply(tmpDelete2);
+		tmpDelete = std::move(EderY[i + 1].transpose());
+		tmpDelete2 = std::move(tmpDelete.dot(Weights[i + 1]));
+		tmpDelete = std::move(tmpDelete2.transpose());
+		tmpDelete2 = std::move(Y[i].computeOutput(Fderivative));
+		EderY[i] = std::move(tmpDelete * tmpDelete2);
 	}
 	return EderY;
 }
@@ -299,11 +307,11 @@ vector<Matrix> NeuralNetwork::backpropagation(float expectedOutput, int thread) 
 	EderY[EderY.size() - 1] = Y2[thread].back().subExpectedOutput(expectedOutput);
 	//Thic computes derivation of mistake E with respect to innerpotential of all other layers
 	for (int i = Y2[thread].size() - 2; i >= 0; --i) {
-		tmpDelete = EderY[i + 1].transpose();
-		tmpDelete2 = tmpDelete.dot(Weights[i + 1]);
-		tmpDelete = tmpDelete2.transpose();
-		tmpDelete2 = Y2[thread][i].computeOutput(Fderivative);
-		EderY[i] = tmpDelete.multiply(tmpDelete2);
+		tmpDelete = std::move(EderY[i + 1].transpose());
+		tmpDelete2 = std::move(tmpDelete.dot(Weights[i + 1]));
+		tmpDelete = std::move(tmpDelete2.transpose());
+		tmpDelete2 = std::move(Y2[thread][i].computeOutput(Fderivative));
+		EderY[i] = std::move(tmpDelete * tmpDelete2);
 	}
 	return EderY;
 }
@@ -321,11 +329,6 @@ void NeuralNetwork::trainNetworkThreads() {
 	vector<Matrix> dE_dY_sumThreads[THREAD_NUM];
 	int batchSize = 48;
 	float stepSize = 0.005f;
-	omp_lock_t layerLockEji[3], layerLockdE[3];
-	for (unsigned i = 0; i < Y2[0].size(); ++i) {
-		omp_init_lock(&layerLockEji[i]);
-		omp_init_lock(&layerLockdE[i]);
-	}
 
 	// Number of cycles = for training the neural network 
 	time_t cycleTime = std::time(nullptr);
@@ -337,64 +340,70 @@ void NeuralNetwork::trainNetworkThreads() {
 		{
 			for (unsigned layer = 0; layer < Y2[0].size(); ++layer) {
 				if (layer == 0) {
-					Eji.push_back(Matrix(Y2[0][layer].rows, 784));
+					Eji.emplace_back(Matrix(Y2[0][layer].rows, 784));
 				}
 				else {
-					Eji.push_back(Matrix(Y2[0][layer].rows, Y2[0][layer - 1].rows));
+					Eji.emplace_back(Matrix(Y2[0][layer].rows, Y2[0][layer - 1].rows));
 				}
-				dE_dY_sum.push_back(Matrix(Y2[0][layer].rows, 1));
+				dE_dY_sum.emplace_back(Matrix(Y2[0][layer].rows, 1));
 			}
 			for (unsigned i = 0; i < THREAD_NUM; ++i) {
 				EjiThreads[i] = Eji;
 				dE_dY_sumThreads[i] = dE_dY_sum;
 			}
-#pragma omp parallel for num_threads(THREAD_NUM) // REMOVE THIS FOR AISA: >88% (but slow)
-			for (int k = 0; k < batchSize; ++k) {
+			#pragma omp parallel num_threads(THREAD_NUM)
+			{
 				Matrix tmp;
 				Matrix tmp2;
 				Matrix tmp3;
-				vector<Matrix> dE_dY;
-				int dataSet = (cycles * batchSize + k) % DATA_SIZE;
-				forwardPropagation(data[dataSet], omp_get_thread_num());
-				dE_dY = backpropagation(labels[dataSet], omp_get_thread_num());
-				for (unsigned layer = 0; layer < Y2[omp_get_thread_num()].size(); ++layer) {
-					if (layer == 0) {
-						tmp = dE_dY[layer].dot(data[dataSet]);
-						EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp;
-						dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
-					}
-					else {
-						tmp = Y[layer - 1].transpose();
-						tmp2 = dE_dY[layer].dot(tmp);
-						EjiThreads[omp_get_thread_num()][layer] = EjiThreads[omp_get_thread_num()][layer] + tmp2;
-						dE_dY_sumThreads[omp_get_thread_num()][layer] = dE_dY_sumThreads[omp_get_thread_num()][layer] + dE_dY[layer];
+				#pragma omp for
+				for (int k = 0; k < batchSize; ++k) {
+					vector<Matrix> dE_dY;
+					int dataSet = (cycles * batchSize + k) % DATA_SIZE;
+					forwardPropagation(data[dataSet], omp_get_thread_num());
+					dE_dY = backpropagation(labels[dataSet], omp_get_thread_num());
+					for (unsigned layer = 0; layer < Y2[omp_get_thread_num()].size(); ++layer) {
+						if (layer == 0) {
+							tmp = dE_dY[layer].dot(data[dataSet]);
+							EjiThreads[omp_get_thread_num()][layer] += tmp;
+							dE_dY_sumThreads[omp_get_thread_num()][layer] += dE_dY[layer];
+						}
+						else {
+							tmp = std::move(Y[layer - 1].transpose());
+							tmp2 = std::move(dE_dY[layer].dot(tmp));
+							EjiThreads[omp_get_thread_num()][layer] += tmp2;
+							dE_dY_sumThreads[omp_get_thread_num()][layer] += dE_dY[layer];
+						}
 					}
 				}
 			}
 			for (int i = 0; i < THREAD_NUM; ++i) {
 				for (int layer = 0; layer < (int)Y2[0].size(); ++layer) {
-					Eji[layer] = Eji[layer] + EjiThreads[i][layer];
-					dE_dY_sum[layer] = dE_dY_sum[layer] + dE_dY_sumThreads[i][layer];
+					Eji[layer] += EjiThreads[i][layer];
+					dE_dY_sum[layer] += dE_dY_sumThreads[i][layer];
 				}
 			}
-#pragma omp parallel for num_threads(THREAD_NUM)
-			for (int layer = 0; layer < (int)Weights.size(); ++layer) {
+			#pragma omp parallel num_threads(THREAD_NUM)
+			{
 				Matrix tmp;
 				Matrix tmp2;
 				Matrix tmp3;
-				if (cycles) {
-					tmp2 = Eji[layer].multiply(stepSize / batchSize);
-					Weights[layer] = Weights[layer] - tmp2;
-					tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
-					tmp3 = tmp2.transpose();
-					Biases[layer] = Biases[layer] - tmp3;
-				}
-				else {
-					tmp2 = Eji[layer].multiply(stepSize / batchSize);
-					Weights[layer] = Weights[layer] - tmp2;
-					tmp2 = dE_dY_sum[layer].multiply(stepSize / batchSize);
-					tmp3 = tmp2.transpose();
-					Biases[layer] = Biases[layer] - tmp3;
+				#pragma omp for
+				for (int layer = 0; layer < (int)Weights.size(); ++layer) {
+					if (cycles) {
+						tmp2 = std::move(Eji[layer] * (stepSize / batchSize));
+						Weights[layer] -= tmp2;
+						tmp2 = std::move(dE_dY_sum[layer] * (stepSize / batchSize));
+						tmp3 = std::move(tmp2.transpose());
+						Biases[layer] -= tmp3;
+					}
+					else {
+						tmp2 = std::move(Eji[layer] * (stepSize / batchSize));
+						Weights[layer] -= tmp2;
+						tmp2 = std::move(dE_dY_sum[layer] * (stepSize / batchSize));
+						tmp3 = std::move(tmp2.transpose());
+						Biases[layer] -= tmp3;
+					}
 				}
 			}
 			Eji.clear();
@@ -415,11 +424,11 @@ void NeuralNetwork::trainNetworkThreads() {
 	//writeLabelToFile(trainPredictions, this->labels, DATA_SIZE); // NEW 
 	//writeLabelToFile(testPredictions, labelsForCompare, PREDICT_SIZE); // NEW
 	writeToFiles();
-	// time_t newTime = std::time(nullptr);
+	time_t newTime = std::time(nullptr);
     
 	//TODO comment
 	//cout << (int)((newTime - wholeTime)/60.0f) << ":" << (newTime - wholeTime) % 60 << endl;
-	//predict();
+	predict();
 
 	return;
 }
@@ -442,36 +451,30 @@ void NeuralNetwork::writeLabelToFile(string filename, vector<float> writeData, i
 
 float NeuralNetwork::predict() {
 	unsigned sameLabels = 0;
-	omp_lock_t writelock;
-	omp_init_lock(&writelock);
 	//TODO comment
-//#pragma omp parallel for num_threads(THREAD_NUM)
-	//for (int i = 0; i < PREDICT_SIZE; ++i) {
+	#pragma omp parallel for reduction(+:sameLabels) num_threads(THREAD_NUM)
+	for (int i = 0; i < PREDICT_SIZE; ++i) {
 		//unsigned label;
-		//forwardPropagation(dataForCompare[i], omp_get_thread_num());
-		//label = argMaxThreads(omp_get_thread_num());
-		//if (label == labelsForCompare[i]) {
-			//omp_set_lock(&writelock);
-			//++sameLabels;
-			//omp_unset_lock(&writelock);
-		//}
-	//}
-	//cout << "Succesfully predicted test labels: " << (float)sameLabels / (float)dataForCompare.size() << endl;
-	//sameLabels = 0;
+		forwardPropagation(dataForCompare[i], omp_get_thread_num());
+		auto label = argMaxThreads(omp_get_thread_num());
+		if (label == labelsForCompare[i]) {
+			++sameLabels;
+		}
+	}
+	cout << "Succesfully predicted test labels: " << (float)sameLabels / (float)dataForCompare.size() << endl;
+	sameLabels = 0;
 	//TODO end comment
-#pragma omp parallel for num_threads(THREAD_NUM)
+	#pragma omp parallel for reduction(+:sameLabels) num_threads(THREAD_NUM)
 	for (int i = 0; i < DATA_SIZE; ++i) {
 		unsigned label;
 		forwardPropagation(data[i], omp_get_thread_num());
 		label = argMaxThreads(omp_get_thread_num());
 		if (label == labels[i]) {
-			omp_set_lock(&writelock);
 			++sameLabels;
-			omp_unset_lock(&writelock);
 		}
 	}
 	//TODO comment
-	// cout << "Succesfully predicted train labels: " << (float)sameLabels / (float)data.size() << endl;
+	 cout << "Succesfully predicted train labels: " << (float)sameLabels / (float)data.size() << endl;
 	return (float)sameLabels / (float)data.size();
 }
 
@@ -519,7 +522,9 @@ void NeuralNetwork::writeToFiles() {
 int main() {
 	srand(2);
 	//srand((unsigned int)time(NULL));
+	//vector<int> layers{ 156, 44, 10 };
 	vector<int> layers{ 256, 64, 10 };
+	//vector<int> layers{ 512, 128, 26 };
 	NeuralNetwork obj(file1, file2, layers);
 
 	obj.predict();

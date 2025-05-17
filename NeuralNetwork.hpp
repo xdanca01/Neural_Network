@@ -33,17 +33,17 @@ private:
 	std::vector<Matrix> Biases;
 
 public:
-	NeuralNetwork(std::string trainingDataFile, std::string labelsFile, std::vector<int>& hiddenNeuronsInLayer);
+	NeuralNetwork(const std::string& trainingDataFile, const std::string& labelsFile, const std::vector<int>& hiddenNeuronsInLayer);
 
 	//fetch data from csv file with ',' delimiter
-	void readData(std::string filename, bool compare);
+	void readData(const std::string& filename, bool compare);
 
 	//fetch expectedOutput from cs file with ',' delimiter
-	void readExpectedOutput(std::string filename, bool compare);
+	void readExpectedOutput(const std::string& filename, bool compare);
 
 	//predict output based on input
-	void forwardPropagation(std::vector<float>& inputNeurons);
-	void forwardPropagation(std::vector<float>& inputNeurons, int thread);
+	void forwardPropagation(const std::vector<float>& inputNeurons);
+	void forwardPropagation(const std::vector<float>& inputNeurons, int thread);
 	float predict();
 	std::vector<Matrix> backpropagation(float expectedOutput);
 	std::vector<Matrix> backpropagation(float expectedOutput, int thread);
